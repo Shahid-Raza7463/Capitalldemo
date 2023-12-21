@@ -1,0 +1,204 @@
+@extends('backEnd.layouts.layout') @section('backEnd_content')
+<style>
+    a{
+        cursor: pointer;
+    }
+</style>
+<!--Content Header (Page header)-->
+<div class="content-header row align-items-center m-0">
+    <nav aria-label="breadcrumb" class="col-sm-4 order-sm-last mb-3 mb-sm-0 p-0 ">
+        {{-- <ol class="breadcrumb d-inline-flex font-weight-600 fs-13 bg-white mb-0 float-sm-right">
+            <li class="breadcrumb-item"><a href="{{url('policy/create')}}">Add Policy</a></li>
+        <li class="breadcrumb-item active">+</li>
+        </ol> --}}
+    </nav>
+    <div class="col-sm-8 header-title p-0">
+        <div class="media">
+            <div class="header-icon text-success mr-3"><i class="typcn typcn-puzzle-outline"></i></div>
+            <div class="media-body">
+                <h1 class="font-weight-bold">Home</h1>
+                <small>List</small>
+            </div>
+        </div>
+    </div>
+</div>
+<!--/.Content Header (Page header)-->
+<div class="body-content">
+    <div class="card mb-4">
+
+        <div class="card-body">
+            @component('backEnd.components.alert')
+
+            @endcomponent
+            <div class="table-responsive">
+                <table class="table display table-bordered table-striped table-hover basic">
+                    <thead>
+                        <tr>
+
+                            <th>File Name</th>
+                            <th>file</th>
+
+                            <th>Description</th>
+							
+                            <th>Share With</th>
+                            <th>Valid Upto</th>
+                            <th>Acknowledge</th>
+                            <th>Policy</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($policy as $policyDatas)
+                        <tr>
+                     
+                            <td><b>{{$policyDatas->filename }}</b>
+                            </td>
+                           <td>
+                                
+                                <a style="color:#37a000;" id=""
+                                onclick="myFunction('{{ asset('backEnd/image/policy/'.$policyDatas->file.'#toolbar=0') }}&embedded=true')">
+                                {{$policyDatas->file ??''}}</a></td>
+                            <td>{{ $policyDatas->descripation }}</td>
+                            <td>{{ $policyDatas->rolename }}</td>
+                            <td>@if($policyDatas->date !=  null){{ date('F d,Y', strtotime($policyDatas->date)) }}@endif</td>
+                            @php
+                            $policy  =DB::table('policyacknowledges')
+                            ->where('policyacknowledges.policy_id',$policyDatas->id)->first();
+                                                  @endphp
+                            <td>@if(empty($policy->acknowledge))
+                                <a data-toggle="modal" style="color: green" id="editCompany" data-id="{{ $policyDatas->id }}"
+                                    data-target="#exampleModal12">
+                                       <span class="badge badge-pill badge-warning">click here to acknowledge</span></a>
+                                @else
+                                <span class="badge badge-pill badge-success">Acknowledged</span>
+                                @endif
+                               </td>
+                            <td>{{ date('F d,Y', strtotime($policyDatas->created_at)) }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+<!--/.body content-->
+<div id="exampleModal2" class="modal fade bd-example-modal-xl" tabindex="-1" role="dialog"
+    aria-labelledby="exampleModalLabel2" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <form id="detailsForm" method="post" action="{{ url('client/clientfile/upload')}}"
+                enctype="multipart/form-data">
+                @csrf
+                <div class="modal-header" style="background:#37a000;">
+                    <h5 style="color: white" class="modal-title font-weight-600" id="exampleModalLabel4">Document</h5>
+                    <div>
+                        <ul>
+                            @foreach ($errors->all() as $e)
+                            <li style="color:red;">{{$e}}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+
+                    <iframe id="myframe"  width="1100" height="900"></iframe>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    function myFunction(id) {
+        $('#exampleModal2').modal('show');
+        var x = id;
+        //     debugger;
+        var url = x;
+        document.getElementById("myframe").setAttribute("src", url);
+
+    }
+
+</script>
+
+<script>
+    document.onkeydown = function(e) {
+            if (e.ctrlKey && 
+                (e.keyCode === 85 )) {
+                return false;
+            }
+    };
+    document.addEventListener('contextmenu', event => event.preventDefault());
+    </script>
+<!-- Modal -->
+<div class="modal fade" id="exampleModal12" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel4"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="detailsForm" method="post" action="{{ url('/policy/statusupdate')}}"
+                enctype="multipart/form-data">
+                @csrf
+                <div class="modal-header" style="background:#37A000;color:white;">
+                    <h5 class="modal-title font-weight-600" id="exampleModalLabel4">Acknowledged Update</h5>
+                 
+                    <button style="color: white" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+
+                    
+                    <div class="row row-sm">
+                        <label for="name" class="col-sm-3 col-form-label font-weight-600">Acknowledged :</label>
+                        <div class="col-sm-6">
+                            <select name="acknowledge" class="form-control">
+                                <!--placeholder-->
+                                <option value="">Please Select one</option>
+                                 <option value="Yes">Mark As Read</option>
+                                <option value="No">Mark As Unread</option>
+                           
+                            </select>
+                            <input hidden placeholder="Enter Subject" id="id"  class="form-control" name="policyid" type="text">
+                        </div>
+                    </div>
+                
+                  <br>
+                    <div class="modal-footer">
+					  <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Save</button>
+                    </div>
+            </form>
+				     
+        </div>
+    </div>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script>
+    $(function () {
+        $('body').on('click', '#editCompany', function (event) {
+    //        debugger;
+            var id = $(this).data('id');
+     debugger;
+            $.ajax({
+                type: "GET",
+
+                url: "{{ url('policyupdate') }}",
+                data: "id=" + id,
+                success : function(response){
+           // alert(res);
+           $("#id").val(response.id);
+debugger;
+            
+        },
+                error: function () {
+
+                },
+            });
+        });
+    });
+
+</script>  
+@endsection

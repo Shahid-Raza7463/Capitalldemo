@@ -1,0 +1,175 @@
+<link href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css" rel="stylesheet">
+<link href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css" rel="stylesheet">
+@extends('backEnd.layouts.layout') @section('backEnd_content')
+
+<!--Content Header (Page header)-->
+<div class="content-header row align-items-center m-0">
+    <nav aria-label="breadcrumb" class="col-sm-4 order-sm-last mb-3 mb-sm-0 p-0 ">
+        <ol class="breadcrumb d-inline-flex font-weight-600 fs-13 bg-white mb-0 float-sm-right">
+            <li class="breadcrumb-item"><a href="{{url('task/create')}}">Add task</a></li>
+            <li class="breadcrumb-item active">+</li>
+        </ol>
+    </nav>
+    <div class="col-sm-8 header-title p-0">
+        <div class="media">
+            <div class="header-icon text-success mr-3"><i class="typcn typcn-user-add-outline"></i></div>
+            <div class="media-body">
+               <a href="{{url('home')}}"> <h1 class="font-weight-bold" style="color:black;">Home</h1></a>
+                <small>Task List</small>
+            </div>
+        </div>
+    </div>
+</div>
+<!--/.Content Header (Page header)-->
+<div class="body-content">
+    <div class="card mb-4">
+     @component('backEnd.components.alert')
+
+        @endcomponent
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="DataTable" class="display nowrap">
+                    <thead>
+                        <tr>
+							  <th style="display: none;">id</th>
+							  <th> Related To</th>
+                            <th> Name</th>
+                            <th>Assign</th>
+							 <th>Assign By</th>
+							 <th>Support By</th>
+                            <th>Created Date</th>
+							<th>Due Date</th>
+                            <th>Status</th>
+                             
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($taskDatas as $taskData)
+                        <tr>
+							   <td style="display: none;">{{$taskData->id }}</td>
+							     <td>
+                                @if($taskData->relatedto == 3)
+                                <span>Assignment <br>
+                                    <b> Client </b> :
+                                    {{ App\Models\Client::select('client_name')->where('id',$taskData->kgsclient_id)->first()->client_name ?? ''}}
+                                    <br>
+                                    <b>Assignment</b> :
+                                    {{ DB::table('assignmentmappings')
+                            ->leftjoin('assignments','assignments.id','assignmentmappings.assignment_id')->select('assignments.assignment_name')
+                            ->where('assignmentgenerate_id',$taskData->assignment_id)->first()->assignment_name ?? ''}}
+                                </span>
+                                @elseif($taskData->relatedto==1)
+                                <span>Dataroom <br>
+                                    <b> Client </b> :
+                                    {{ App\Models\Client::select('client_name')->where('id',$taskData->dataroomclient_id)->first()->client_name ?? ''}}</span>
+
+                                @elseif($taskData->relatedto==2)
+                                <span><b>Other</b> : {{ $taskData->other }}<br>
+                                </span>
+                                @endif
+                            </td>
+                            <td><a href="{{url('view/task', $taskData->id)}}" >{{$taskData->taskname ??''}}</a></td>
+						@php
+                        $taskassig = DB::table('taskassign')
+        ->leftjoin('teammembers','teammembers.id','taskassign.teammember_id')
+        ->leftjoin('roles','roles.id','teammembers.role_id')
+        ->where('taskassign.task_id',$taskData->id)->select('teammembers.team_member','roles.rolename')->get();
+                  //  dd($taskassig);
+                    @endphp
+                            @if($taskData->createdby ==  Auth::user()->teammember_id)
+                            <td> @foreach($taskassig as $taskassign)<span><a  >{{$taskassign->team_member ??'' }} ( {{$taskassign->rolename}} )</a></span>,@endforeach</td>
+                          @else
+							 <td>@foreach($taskassig as $taskassign)<span>{{$taskassign->team_member ??'' }} ( {{$taskassign->rolename}} )</span> ,@endforeach</td>
+							@endif
+							
+							<td>{{ App\Models\Teammember::select('team_member')->where('id',$taskData->createdby)->first()->team_member ?? '' }}</td>
+							<td>{{ $taskData->supportteammember ??'' }}</td>
+							<td>{{ date('F d,Y', strtotime($taskData->created_at)) }}</td>
+                            <td>{{ date('F d,Y', strtotime($taskData->duedate)) }}</td>
+                           
+                          <td>@if($taskData->status ==  0)
+                            <span class="badge badge-pill badge-success">open</span>
+							  @elseif($taskData->status ==  2)
+                            <span class="badge badge-pill badge-primary">Cancelled Due to Non Completion</span>
+                            @else
+                            <span class="badge badge-pill badge-danger">close</span>
+                          
+                            
+                            @endif</td>
+                      
+                            
+                        </tr>
+                      @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div><!--/.body content-->
+
+@endsection
+   <script src="https://code.jquery.com/jquery-3.5.1.js"></script>                               
+<script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>                               
+<script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>                               
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>                               
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>                               
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>                               
+<script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>                               
+<script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.print.min.js"></script>    
+<script>
+$(document).ready(function() {
+    var table=$('#DataTable').DataTable( {
+        dom: 'Bfrtip',
+        "order": [[ 0, "desc" ]],
+        
+        buttons: [
+            
+            {
+                extend: 'copyHtml5',
+                exportOptions: {
+                    columns: [ 0, ':visible' ]
+                }
+            },
+            {
+                extend: 'excelHtml5',
+                exportOptions: {
+                    columns: ':visible'
+                }
+            },
+            {
+                extend: 'pdfHtml5',
+                exportOptions: {
+                    columns: [ 0, 1, 2, 5 ]
+                }
+            },
+            'colvis'      
+    ]  
+    } );
+
+    $('#DataTable thead tr').clone(true).addClass('filters').appendTo('#DataTable thead');
+        $('#DataTable thead .filters th').each(function() {
+            var title = $(this).text();
+            var data_name = $(this).data('name');
+            var data_filter = $(this).data('filter');
+            if (title == 'SR.' || title == 'Options' || data_name == '#' || data_filter ==
+                'false') {
+                $(this).html('');
+            } else {
+                $(this).html(
+                    '<input type="text" class="form-control" placeholder="' +
+                    title +
+                    '" />');
+            }
+
+        });
+
+        $('#DataTable thead .filters input').on('blur keyup change', function() {
+            var columnIndex = $(this).parent().index();
+            table.column(columnIndex).search($(this).val()).draw();
+        });
+} );
+
+
+</script>    
+

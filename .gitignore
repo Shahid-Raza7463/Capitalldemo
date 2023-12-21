@@ -10,21 +10,17 @@ vendor/
 tests/
 storage/
 config/
-backEnd/
 bootstrap/
 public/
 
 # Ignore specific files
-.env
 .phpunit.result.cache
 .styleci.yml
 .env.example
 .gitattributes
 .htaccess
-server.php
 .editorconfig
 .env.example
-index.php
 webpack.mix.js
 
 
