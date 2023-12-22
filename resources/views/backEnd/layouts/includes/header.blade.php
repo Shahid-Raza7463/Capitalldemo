@@ -280,23 +280,22 @@
 
             @if (count($clientnotification) > 0)
                 @php
-                    $hasUnreadNotification = false;
+                    $unreadNotificationCount = 0;
                     foreach ($clientnotification as $clientnotificationdata) {
                         if ($clientnotificationdata->readstatus == 0) {
-                            $hasUnreadNotification = true;
-                            break;
+                            $unreadNotificationCount++;
                         }
                     }
                 @endphp
 
                 <li class="nav-item dropdown notification">
-                    <a class="nav-link dropdown-toggle {{ $hasUnreadNotification ? 'badge-dot' : '' }}" href="#"
-                        data-toggle="dropdown">
+                    <a class="nav-link dropdown-toggle {{ $unreadNotificationCount > 0 ? 'badge-dot' : '' }}"
+                        href="#" data-toggle="dropdown">
                         <i class="typcn typcn-bell"></i>
                     </a>
                     <div class="dropdown-menu dropdown-menu-right">
                         <h6 class="notification-title">Notifications</h6>
-                        <p class="notification-text">You have {{ count($clientnotification) }} unread notification</p>
+                        <p class="notification-text">You have {{ $unreadNotificationCount }} unread notification</p>
                         <div class="notification-list">
                             @foreach ($clientnotification as $clientnotificationdata)
                                 <div class="media new">
@@ -319,6 +318,9 @@
                 </li>
                 <!--/.dropdown-->
             @endif
+
+
+
 
 
 

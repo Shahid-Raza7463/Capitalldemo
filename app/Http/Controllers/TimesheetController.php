@@ -2187,9 +2187,11 @@ class TimesheetController extends Controller
   //     return view('backEnd.timesheet.create', compact('client', 'teammember', 'assignment', 'partner'));
   //   }
   // }
+
   //! new code 21-12-23
   public function create(Request $request)
   {
+    // upadte create function and status in assignmentteammappings
     // dd(auth()->user()->teammember_id);
     $partner = Teammember::where('role_id', '=', 13)->where('status', '=', 1)->with('title')->get();
     $teammember = Teammember::where('role_id', '!=', 11)->with('title', 'role')->get();
@@ -2219,6 +2221,8 @@ class TimesheetController extends Controller
         ->leftjoin('assignmentbudgetings', 'assignmentbudgetings.assignmentgenerate_id', 'assignmentmappings.assignmentgenerate_id')
         ->leftjoin('clients', 'clients.id', 'assignmentbudgetings.client_id')
         ->orwhere('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
+        // i have add this line becouse manager contain it but staff not contain it so basically after add this code no contain staff and manager 
+        ->whereNotIn('assignmentbudgetings.assignmentname', ['Unallocated', 'Official Travel', 'Off/Holiday', 'Seminar/Conference/Post Qualification Course'])
         ->select('clients.client_name', 'clients.id')
         ->orderBy('client_name', 'ASC')
         ->distinct()->get();
@@ -2282,9 +2286,26 @@ class TimesheetController extends Controller
               echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
             }
           } else {
-            foreach (DB::table('assignmentbudgetings')->where('client_id', $request->cid)
-              ->where('created_by', auth()->user()->id)
-              ->leftjoin('assignments', 'assignments.id', 'assignmentbudgetings.assignment_id')
+            //!old code
+            // foreach (DB::table('assignmentbudgetings')->where('client_id', $request->cid)
+            //   ->where('created_by', auth()->user()->id)
+            //   ->leftjoin('assignments', 'assignments.id', 'assignmentbudgetings.assignment_id')
+            //   ->orderBy('assignment_name')->get() as $sub) {
+            //   echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
+            // }
+
+            //  i have add this code after kartic bindal problem 
+            foreach (DB::table('assignmentbudgetings')
+              ->join('assignmentmappings', 'assignmentmappings.assignmentgenerate_id', 'assignmentbudgetings.assignmentgenerate_id')
+              ->leftjoin('assignments', 'assignments.id', 'assignmentmappings.assignment_id')
+              ->leftjoin('assignmentteammappings', 'assignmentteammappings.assignmentmapping_id', 'assignmentmappings.id')
+              ->where('assignmentbudgetings.client_id', $request->cid)
+              ->where('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
+
+              ->where(function ($query) {
+                $query->whereNull('assignmentteammappings.status')
+                  ->orWhere('assignmentteammappings.status', '=', 0);
+              })
               ->orderBy('assignment_name')->get() as $sub) {
               echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
             }
@@ -2305,7 +2326,7 @@ class TimesheetController extends Controller
           //   })
           //   ->orderBy('assignment_name')->get() as $sub) {
           //   echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
-          // }
+
 
           //* i have removed above line 21-12-23 ko so may be occure any problem in future regarding inactive / active teammember from assignment          
           //* basically i have fixed hare sahil gupta (staff) ko off holiday nahi aa raha tha timesheet create me  if any problem in future then run old code 21-12-23

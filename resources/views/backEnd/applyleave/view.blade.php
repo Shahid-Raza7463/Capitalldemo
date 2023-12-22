@@ -7,8 +7,8 @@
                 @if ($applyleave->approver == Auth::user()->teammember_id || Auth::user()->teammember_id == $applyleave->createdby)
                     @if ($applyleave->status == '0')
                         <!--    <li class="btn btn-info ml-2"><a href="{{ route('applyleave.edit', $applyleave->id ?? '') }}"
-                                                                                    style="color:white;">Edit
-                                                                                </a></li> -->
+                                                                                        style="color:white;">Edit
+                                                                                    </a></li> -->
                     @endif
                 @endif
                 <li> <a class="btn btn-success ml-2" href="{{ url('applyleave') }}">
