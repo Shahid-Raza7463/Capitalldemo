@@ -85,6 +85,69 @@
                  @component('backEnd.components.alert')
                  @endcomponent
                  <div class="table-responsive">
+                     {{-- filtering functionality --}}
+
+                     <div class="row row-sm">
+                         <div class="col-3">
+                             <div class="form-group">
+                                 <label class="font-weight-600">Employee</label>
+                                 <select class="language form-control" id="employee1" name="employee">
+                                     <option value="">Please Select One</option>
+                                     @php
+                                         $displayedValues = [];
+                                     @endphp
+                                     @foreach ($teamapplyleaveDatas as $applyleaveDatas)
+                                         @if (!in_array($applyleaveDatas->team_member, $displayedValues))
+                                             <option value="{{ $applyleaveDatas->id }}">
+                                                 {{ $applyleaveDatas->team_member }}
+                                             </option>
+                                             @php
+                                                 $displayedValues[] = $applyleaveDatas->team_member;
+                                             @endphp
+                                         @endif
+                                     @endforeach
+                                 </select>
+                             </div>
+                         </div>
+
+                         <div class="col-3">
+                             <div class="form-group">
+                                 <label class="font-weight-600">Leave Type</label>
+                                 <select class="language form-control" id="leave1" name="leave">
+                                     <option value="">Please Select One</option>
+                                     @php
+                                         $displayedValues = [];
+                                     @endphp
+                                     @foreach ($teamapplyleaveDatas as $applyleaveDatas)
+                                         @if (!in_array($applyleaveDatas->name, $displayedValues))
+                                             <option value="">
+                                                 {{ $applyleaveDatas->name }}
+                                             </option>
+                                             @php
+                                                 $displayedValues[] = $applyleaveDatas->name;
+                                             @endphp
+                                         @endif
+                                     @endforeach
+                                 </select>
+                             </div>
+                         </div>
+                         <div class="col-3">
+                             <div class="form-group">
+                                 <label class="font-weight-600">Start Date</label>
+                                 <input type="date" class="form-control" id="start" name="start">
+
+                             </div>
+                         </div>
+                         <div class="col-3">
+                             <div class="form-group">
+                                 <label class="font-weight-600">End Date</label>
+                                 <input type="date" class="form-control" name="end" id="end">
+                             </div>
+                         </div>
+                     </div>
+
+
+
                      <table id="examplee" class="display nowrap">
                          <thead>
                              <tr>
@@ -92,24 +155,30 @@
                                  <th>Employee</th>
                                  <th>Leave Type</th>
                                  <th>Approver</th>
-
                                  <th>Reason for Leave</th>
-                                 <th> Leave Period</th>
+                                 <th>Leave Period</th>
                                  <th>Days</th>
-
                                  <th>Date of Request</th>
                                  <th>Status</th>
-
-
                              </tr>
                          </thead>
+                         <style>
+                             .columnSize {
+                                 width: 7rem;
+                                 font-size: 15px;
+                             }
+                         </style>
                          <tbody>
+                             {{-- @php
+                                 dd($teamapplyleaveDatas);
+                             @endphp --}}
                              @foreach ($teamapplyleaveDatas as $applyleaveDatas)
                                  <tr>
                                      <td style="display: none;">{{ $applyleaveDatas->id }}</td>
-                                     <td> <a href="{{ route('applyleave.show', $applyleaveDatas->id) }}">
+                                     <td class="columnSize"> <a
+                                             href="{{ route('applyleave.show', $applyleaveDatas->id) }}">
                                              {{ $applyleaveDatas->team_member ?? '' }}</a></td>
-                                     <td>
+                                     <td class="columnSize">
 
                                          {{ $applyleaveDatas->name ?? '' }}<br>
                                          @if ($applyleaveDatas->type == '0')
@@ -125,13 +194,18 @@
                                              <span>Religious Festival</span>
                                          @endif
                                      </td>
-                                     <td>{{ App\Models\Teammember::select('team_member')->where('id', $applyleaveDatas->approver)->first()->team_member ?? '' }}
+                                     <td class="columnSize">
+                                         {{ App\Models\Teammember::select('team_member')->where('id', $applyleaveDatas->approver)->first()->team_member ?? '' }}
                                      </td>
-
-                                     <td>{{ $applyleaveDatas->reasonleave ?? '' }} </td>
-
-                                     <td>{{ date('F d,Y', strtotime($applyleaveDatas->from)) ?? '' }} -
-                                         {{ date('F d,Y', strtotime($applyleaveDatas->to)) ?? '' }}</td>
+                                     <td>
+                                         <div style="font-size: 15px; width: 7rem;text-wrap: wrap;">
+                                             {{ $applyleaveDatas->reasonleave ?? '' }}
+                                         </div>
+                                     </td>
+                                     {{-- <td>{{ date('F d,Y', strtotime($applyleaveDatas->from)) ?? '' }} -
+                                         {{ date('F d,Y', strtotime($applyleaveDatas->to)) ?? '' }}</td> --}}
+                                     <td class="columnSize">{{ date('d-m-Y', strtotime($applyleaveDatas->from)) ?? '' }} to
+                                         {{ date('d-m-Y', strtotime($applyleaveDatas->to)) ?? '' }}</td>
                                      @php
                                          $to = Carbon\Carbon::createFromFormat('Y-m-d', $applyleaveDatas->to ?? '');
                                          $from = Carbon\Carbon::createFromFormat('Y-m-d', $applyleaveDatas->from);
@@ -141,13 +215,17 @@
                                              ->where('enddate', '<=', $applyleaveDatas->to)
                                              ->count();
                                      @endphp
-                                     <td>{{ $diff_in_days - $holidaycount ?? '' }}</td>
-                                     <td>{{ date('F d,Y', strtotime($applyleaveDatas->created_at)) ?? '' }}</td>
-                                     <td>
+                                     <td class="columnSize">{{ $diff_in_days - $holidaycount ?? '' }}</td>
+                                     {{-- <td>{{ date('F d,Y', strtotime($applyleaveDatas->created_at)) ?? '' }}</td> --}}
+                                     <td class="columnSize">
+                                         {{ date('d-m-Y', strtotime($applyleaveDatas->created_at)) ?? '' }}</td>
+                                     <td class="columnSize">
                                          @if ($applyleaveDatas->status == 0)
-                                             <span class="badge badge-pill badge-warning">Created</span>
+                                             <span class="badge badge-pill badge-warning"><span
+                                                     style="display: none;">A</span>Created</span>
                                          @elseif($applyleaveDatas->status == 1)
-                                             <span class="badge badge-success">Approved</span>
+                                             <span class="badge badge-success"><span
+                                                     style="display: none;">B</span>Approved</span>
                                          @elseif($applyleaveDatas->status == 2)
                                              <span class="badge badge-danger">Rejected</span>
                                          @endif
@@ -161,7 +239,6 @@
 
              </div>
          </div>
-
      </div>
      <!--/.body content-->
  @endsection
@@ -173,13 +250,14 @@
  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
  <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
  <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.print.min.js"></script>
+
  <script>
      $(document).ready(function() {
          $('#examplee').DataTable({
              dom: 'Bfrtip',
-             "pageLength": 100,
+             "pageLength": 50,
              "order": [
-                 [0, "desc"]
+                 [8, "asc"]
              ],
 
              buttons: [

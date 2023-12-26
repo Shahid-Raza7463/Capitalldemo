@@ -238,10 +238,10 @@ class TimesheetrequestController extends Controller
     //         return back()->withErrors($output)->withInput();
     //     }
     // }
-
-    // zxzx submi
+    //! zxzx submi 26-12-23
     public function timesheetsubmission(Request $request)
     {
+        // dd($request);
         try {
             $usertimesheetfirstdate =  DB::table('timesheets')
                 ->where('status', '0')
@@ -389,6 +389,7 @@ class TimesheetrequestController extends Controller
             return back()->withErrors($output)->withInput();
         }
     }
+
 
     public function timesheetsubmit(Request $request)
     {

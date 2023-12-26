@@ -258,8 +258,6 @@ class ApplyleaveController extends Controller
     }
 
     $role_id = Teammember::find($request->member)->role_id;
-
-
     return view('backEnd.applyleave.teamapplication', compact('countCasualafmnth', 'leavetaken', 'teammonthcount', 'totalcountCasual', 'teamapplyleaveDatas', 'birthday', 'countbirthday', 'Casual', 'Sick', 'countSick', 'countCasual', 'clInAttendance', 'slInAttendance', 'teammember', 'role_id'));
   }
 
@@ -451,6 +449,678 @@ class ApplyleaveController extends Controller
       return view('backEnd.applyleave.examrequestlist', compact('timesheetrequestsDatas', 'myteamtimesheetrequestsDatas'));
     }
   }
+  //! old code 26-12-23
+  // public function index()
+  // {
+
+  //   $currentdate = date('Y-m-d');
+  //   $currentYear = date('Y');
+  //   $financialYearStart = $currentYear . '-04-01';
+  //   $financialYearEnd = ($currentYear + 1) . '-03-31';
+
+  //   $casualteam = DB::table('teammembers')->where('id', auth()->user()->teammember_id)->first();
+
+  //   $birthday = DB::table('leavetypes')
+  //     ->where('year', $currentYear)->where('name', 'Birthday/Religious Festival')->first();
+  //   $Casual = DB::table('leavetypes')->where('year', $currentYear)->where('name', 'Casual Leave')->first();
+  //   $Sick = DB::table('leavetypes')->where('year', $currentYear)->where('name', 'Sick Leave')->first();
+  //   //  dd($casualteam);
+  //   if ($casualteam->joining_date < $Casual->startdate) {
+
+  //     $to = \Carbon\Carbon::createFromFormat('Y-m-d', $Casual->startdate);
+  //   } else {
+  //     $to = \Carbon\Carbon::createFromFormat('Y-m-d', $casualteam->joining_date);
+  //   }
+
+
+
+
+  //   $diff_in_months = $to->diffInMonths($currentdate) + 1;
+  //   if (\Carbon\Carbon::createFromFormat('Y-m-d', $casualteam->joining_date)->diffInDays($currentdate) < 90) {
+  //     $diff_in_months = 0;
+  //   }
+  //   //dd($diff_in_months);
+  //   $teamdate = \Carbon\Carbon::createFromFormat('Y-m-d', $casualteam->joining_date);
+  //   //   $currentdate = date('Y-m-d');
+  //   $teammonthcount = $teamdate->diffInMonths($currentdate) + 1;
+  //   if ($teamdate->diffInDays($currentdate) < 90) {
+  //     $teammonthcount = 0;
+  //   }
+
+  //   if (auth()->user()->teammember_id == 434 || auth()->user()->teammember_id == 429) {
+  //     $teammember = Teammember::with('role:id,rolename')
+  //       ->whereNotNull('joining_date')
+  //       ->get();
+
+
+
+
+  //     $appliedSick = DB::table('applyleaves')
+  //       ->where('status', '!=', '2')
+  //       ->where('leavetype', $Sick->id)
+  //       ->where('createdby', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->get();
+
+  //     $countSick = 0;
+
+  //     foreach ($appliedSick as $sickLeave) {
+  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->from);
+  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->to);
+  //       $period = CarbonPeriod::create($fromDate, $toDate);
+
+  //       $datess = [];
+  //       foreach ($period as $date) {
+  //         $datess[] = $date->format('Y-m-d');
+  //       }
+
+  //       $getholidays = DB::table('holidays')->where('startdate', '>=', $toDate)
+  //         ->where('enddate', '<=', $toDate)->select('startdate')->get();
+
+  //       $hdatess = [];
+  //       foreach ($getholidays as $date) {
+  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
+  //       }
+
+  //       $countSick = array_diff($datess, $hdatess);
+  //     }
+
+  //     $countSick = DB::table('leaveapprove')
+  //       ->where('year', $currentYear)->where('leavetype', $Sick->id)
+  //       ->where('teammemberid', auth()->user()->teammember_id)->sum('totaldays');
+  //     //  dd($countSick);
+  //     $countCasual = DB::table('leaveapprove')
+  //       ->where('year', $currentYear)->where('leavetype', $Casual->id)
+  //       ->where('teammemberid', auth()->user()->teammember_id)->sum('totaldays');
+
+  //     $countCasualafmnth = DB::table('leaveapprove')
+  //       ->where('year', $currentYear)
+  //       ->where('leavetype', $Casual->id)
+  //       ->where('teammemberid', auth()->user()->teammember_id)
+  //       ->where('created_at', '>', Carbon::createFromFormat('Y-m-d', $casualteam->joining_date)->addMonths(3))->sum('totaldays');
+
+  //     $countbirthday = DB::table('leaveapprove')
+  //       ->where('year', $currentYear)->where('leavetype', $birthday->id)
+  //       ->where('teammemberid', auth()->user()->teammember_id)->sum('totaldays');
+
+  //     //dd($countSick);
+  //     $totalcountCasual = $Casual->noofdays * $diff_in_months;
+  //     // dd($totalcountCasual);
+  //     //  dd($countCasualafmnth);
+  //     $teamapplyleaveDatas  = DB::table('applyleaves')
+  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+  //       ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
+  //       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+  //       ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->get();
+  //     // dd($applyleaveDatas);
+  //     return view('backEnd.applyleave.teamapplication', compact(
+  //       'teammember',
+  //       'countCasualafmnth',
+  //       'teammonthcount',
+  //       'totalcountCasual',
+  //       'teamapplyleaveDatas',
+  //       'birthday',
+  //       'countbirthday',
+  //       'Casual',
+  //       'Sick',
+  //       'countSick',
+  //       'countCasual'
+  //     ));
+  //   } elseif (auth()->user()->role_id == 11) {
+
+  //     $teammember = Teammember::with('role:id,rolename')
+  //       ->whereNotNull('joining_date')
+  //       ->get();
+
+  //     $appliedSick = DB::table('applyleaves')
+  //       ->where('status', '!=', '2')
+  //       ->where('leavetype', $Sick->id)
+  //       ->where('createdby', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->get();
+
+  //     $countSick = 0;
+  //     $datess = [];
+  //     $hdatess = [];
+  //     foreach ($appliedSick as $sickLeave) {
+  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->from);
+  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->to);
+  //       $period = CarbonPeriod::create($fromDate, $toDate);
+
+
+  //       foreach ($period as $date) {
+  //         $datess[] = $date->format('Y-m-d');
+  //       }
+
+  //       $getholidays = DB::table('holidays')->get();
+
+
+  //       foreach ($getholidays as $date) {
+  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
+  //       }
+  //       $datess = array_unique($datess);
+  //     }
+  //     $countSick = count(array_diff($datess, $hdatess));
+
+
+  //     $appliedCasual = DB::table('applyleaves')
+  //       ->where('status', '!=', '2')
+  //       ->where('leavetype', $Casual->id)
+  //       ->where('createdby', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->get();
+
+  //     $countCasual = 0;
+  //     $casualDates = [];
+  //     foreach ($appliedCasual as $CasualLeave) {
+
+  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualLeave->from);
+  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualLeave->to);
+  //       $period = CarbonPeriod::create($fromDate, $toDate);
+
+
+  //       foreach ($period as $date) {
+  //         $casualDates[] = $date->format('Y-m-d');
+  //       }
+
+  //       $getholidays = DB::table('holidays')->get();
+
+  //       $hdatess = [];
+  //       foreach ($getholidays as $date) {
+  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
+  //       }
+  //       $casualDates = array_unique($casualDates);
+  //     }
+  //     $countCasual = count(array_diff($casualDates, $hdatess));
+
+  //     $appliedCasualafmnth = DB::table('applyleaves')
+  //       ->where('status', '!=', '2')
+  //       ->where('leavetype', $Casual->id)
+  //       ->where('createdby', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->where('created_at', '>', Carbon::createFromFormat('Y-m-d', $casualteam->joining_date)->addDays(90))
+  //       ->get();
+
+  //     $countCasualafmnth = 0;
+  //     $CasualafmnthDates = [];
+  //     foreach ($appliedCasualafmnth as $CasualafmnthLeave) {
+
+  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualafmnthLeave->from);
+  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualafmnthLeave->to);
+  //       $period = CarbonPeriod::create($fromDate, $toDate);
+
+
+  //       foreach ($period as $date) {
+  //         $CasualafmnthDates[] = $date->format('Y-m-d');
+  //       }
+
+  //       $getholidays = DB::table('holidays')->get();
+
+  //       $hdatess = [];
+  //       foreach ($getholidays as $date) {
+  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
+  //       }
+  //       $CasualafmnthDates = array_unique($CasualafmnthDates);
+  //     }
+  //     $countCasualafmnth = count(array_diff($CasualafmnthDates, $hdatess));
+
+
+
+
+
+  //     $appliedbirthday = DB::table('applyleaves')
+  //       ->where('status', '!=', '2')
+  //       ->where('leavetype', $birthday->id)
+  //       ->where('createdby', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->get();
+  //     $countbirthday = 0;
+  //     $birthdayDates = [];
+  //     foreach ($appliedbirthday as $birthdayLeave) {
+
+  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $birthdayLeave->from);
+  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $birthdayLeave->to);
+  //       $period = CarbonPeriod::create($fromDate, $toDate);
+
+
+  //       foreach ($period as $date) {
+  //         $birthdayDates[] = $date->format('Y-m-d');
+  //       }
+
+  //       $getholidays = DB::table('holidays')->get();
+
+  //       $hdatess = [];
+  //       foreach ($getholidays as $date) {
+  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
+  //       }
+  //       $birthdayDates = array_unique($birthdayDates);
+  //     }
+  //     $countbirthday = count(array_diff($birthdayDates, $hdatess));
+
+  //     //dd($diff_in_months);
+  //     $totalcountCasual = $Casual->noofdays * $diff_in_months;
+  //     //  dd($diff_in_months);
+
+  //     //  dd($countCasualafmnth);
+  //     $leavetaken = DB::table('leaveapprove')
+  //       ->where('year', '2023')->where('teammemberid', auth()->user()->teammember_id)->sum('totaldays');
+  //     $myapplyleaveDatas  = DB::table('applyleaves')
+  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+  //       ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
+  //       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+  //       ->where('applyleaves.createdby', auth()->user()->teammember_id)
+  //       ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->latest()->get();
+
+  //     $teamapplyleaveDatas  = DB::table('applyleaves')
+  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+  //       ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
+  //       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+  //       ->where('applyleaves.approver', auth()->user()->teammember_id)
+  //       ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->get();
+
+  //     $columns = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'ninghteen', 'twenty', 'twentyone', 'twentytwo', 'twentythree', 'twentyfour', 'twentyfive', 'twentysix', 'twentyseven', 'twentyeight', 'twentynine', 'thirty', 'thirtyone'];
+  //     $attendance = DB::table('attendances')
+  //       ->where('employee_name', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->get();
+
+  //     $clInAttendance = 0;
+  //     $slInAttendance = 0;
+  //     //dd($attendance);
+  //     foreach ($attendance as $item) {
+  //       foreach ($columns as $column) {
+  //         if ($item->$column === 'CL/C' || $item->$column === 'CL/A') {
+  //           $clInAttendance++;
+  //         }
+  //         if ($item->$column === 'SL/C' || $item->$column === 'SL/A') {
+  //           $slInAttendance++;
+  //         }
+  //       }
+  //     }
+  //     $role_id = auth()->user()->teammember_id;
+  //     $teamapplyleaveDatas  = DB::table('applyleaves')
+  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+  //       ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
+  //       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+
+  //       ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->get();
+  //     // dd($applyleaveDatas);
+  //     dd('3', 'fi');
+  //     return view('backEnd.applyleave.teamapplication', compact(
+  //       'teammember',
+  //       'countCasualafmnth',
+  //       'teammonthcount',
+  //       'totalcountCasual',
+  //       'teamapplyleaveDatas',
+  //       'birthday',
+  //       'countbirthday',
+  //       'Casual',
+  //       'Sick',
+  //       'countSick',
+  //       'countCasual',
+  //       'role_id',
+  //       'clInAttendance',
+  //       'slInAttendance',
+
+  //     ));
+  //   } elseif (auth()->user()->role_id == 18) {
+
+  //     $role_id = auth()->user()->teammember_id;
+
+  //     $teammember = Teammember::with('role:id,rolename')
+  //       ->whereNotNull('joining_date')
+  //       ->get();
+
+  //     $appliedSick = DB::table('applyleaves')
+  //       ->where('status', '!=', '2')
+  //       ->where('leavetype', $Sick->id)
+  //       ->where('createdby', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->get();
+
+  //     $countSick = 0;
+  //     $datess = [];
+  //     $hdatess = [];
+  //     foreach ($appliedSick as $sickLeave) {
+  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->from);
+  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->to);
+  //       $period = CarbonPeriod::create($fromDate, $toDate);
+
+
+  //       foreach ($period as $date) {
+  //         $datess[] = $date->format('Y-m-d');
+  //       }
+
+  //       $getholidays = DB::table('holidays')->get();
+
+
+  //       foreach ($getholidays as $date) {
+  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
+  //       }
+  //       $datess = array_unique($datess);
+  //     }
+  //     $countSick = count(array_diff($datess, $hdatess));
+
+
+  //     $appliedCasual = DB::table('applyleaves')
+  //       ->where('status', '!=', '2')
+  //       ->where('leavetype', $Casual->id)
+  //       ->where('createdby', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->get();
+
+  //     $countCasual = 0;
+  //     $casualDates = [];
+  //     foreach ($appliedCasual as $CasualLeave) {
+
+  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualLeave->from);
+  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualLeave->to);
+  //       $period = CarbonPeriod::create($fromDate, $toDate);
+
+
+  //       foreach ($period as $date) {
+  //         $casualDates[] = $date->format('Y-m-d');
+  //       }
+
+  //       $getholidays = DB::table('holidays')->get();
+
+  //       $hdatess = [];
+  //       foreach ($getholidays as $date) {
+  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
+  //       }
+  //       $casualDates = array_unique($casualDates);
+  //     }
+  //     $countCasual = count(array_diff($casualDates, $hdatess));
+
+  //     $appliedCasualafmnth = DB::table('applyleaves')
+  //       ->where('status', '!=', '2')
+  //       ->where('leavetype', $Casual->id)
+  //       ->where('createdby', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->where('created_at', '>', Carbon::createFromFormat('Y-m-d', $casualteam->joining_date)->addDays(90))
+  //       ->get();
+
+  //     $countCasualafmnth = 0;
+  //     $CasualafmnthDates = [];
+  //     foreach ($appliedCasualafmnth as $CasualafmnthLeave) {
+
+  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualafmnthLeave->from);
+  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualafmnthLeave->to);
+  //       $period = CarbonPeriod::create($fromDate, $toDate);
+
+
+  //       foreach ($period as $date) {
+  //         $CasualafmnthDates[] = $date->format('Y-m-d');
+  //       }
+
+  //       $getholidays = DB::table('holidays')->get();
+
+  //       $hdatess = [];
+  //       foreach ($getholidays as $date) {
+  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
+  //       }
+  //       $CasualafmnthDates = array_unique($CasualafmnthDates);
+  //     }
+  //     $countCasualafmnth = count(array_diff($CasualafmnthDates, $hdatess));
+
+
+
+
+
+  //     $appliedbirthday = DB::table('applyleaves')
+  //       ->where('status', '!=', '2')
+  //       ->where('leavetype', $birthday->id)
+  //       ->where('createdby', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->get();
+  //     $countbirthday = 0;
+  //     $birthdayDates = [];
+  //     foreach ($appliedbirthday as $birthdayLeave) {
+
+  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $birthdayLeave->from);
+  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $birthdayLeave->to);
+  //       $period = CarbonPeriod::create($fromDate, $toDate);
+
+
+  //       foreach ($period as $date) {
+  //         $birthdayDates[] = $date->format('Y-m-d');
+  //       }
+
+  //       $getholidays = DB::table('holidays')->get();
+
+  //       $hdatess = [];
+  //       foreach ($getholidays as $date) {
+  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
+  //       }
+  //       $birthdayDates = array_unique($birthdayDates);
+  //     }
+  //     $countbirthday = count(array_diff($birthdayDates, $hdatess));
+
+  //     //dd($diff_in_months);
+  //     $totalcountCasual = $Casual->noofdays * $diff_in_months;
+  //     //  dd($diff_in_months);
+
+  //     //  dd($countCasualafmnth);
+  //     $leavetaken = DB::table('leaveapprove')
+  //       ->where('year', '2023')->where('teammemberid', auth()->user()->teammember_id)->sum('totaldays');
+
+  //     $columns = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'ninghteen', 'twenty', 'twentyone', 'twentytwo', 'twentythree', 'twentyfour', 'twentyfive', 'twentysix', 'twentyseven', 'twentyeight', 'twentynine', 'thirty', 'thirtyone'];
+  //     $attendance = DB::table('attendances')
+  //       ->where('employee_name', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->get();
+
+  //     $clInAttendance = 0;
+  //     $slInAttendance = 0;
+  //     //dd($attendance);
+  //     foreach ($attendance as $item) {
+  //       foreach ($columns as $column) {
+  //         if ($item->$column === 'CL/C' || $item->$column === 'CL/A') {
+  //           $clInAttendance++;
+  //         }
+  //         if ($item->$column === 'SL/C' || $item->$column === 'SL/A') {
+  //           $slInAttendance++;
+  //         }
+  //       }
+  //     }
+  //     $teamapplyleaveDatas  = DB::table('applyleaves')
+  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+  //       ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
+  //       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+  //       ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->latest()->get();
+
+  //     return view('backEnd.applyleave.teamapplication', compact(
+  //       'teammember',
+  //       'countCasualafmnth',
+  //       'teammonthcount',
+  //       'totalcountCasual',
+  //       'teamapplyleaveDatas',
+  //       'birthday',
+  //       'countbirthday',
+  //       'Casual',
+  //       'Sick',
+  //       'countSick',
+  //       'countCasual',
+  //       'role_id',
+  //       'clInAttendance',
+  //       'slInAttendance',
+  //     ));
+  //   } else {
+
+  //     $appliedSick = DB::table('applyleaves')
+  //       ->where('status', '!=', '2')
+  //       ->where('leavetype', $Sick->id)
+  //       ->where('createdby', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->get();
+
+  //     $countSick = 0;
+  //     $datess = [];
+  //     $hdatess = [];
+  //     foreach ($appliedSick as $sickLeave) {
+  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->from);
+  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->to);
+  //       $period = CarbonPeriod::create($fromDate, $toDate);
+
+
+  //       foreach ($period as $date) {
+  //         $datess[] = $date->format('Y-m-d');
+  //       }
+
+  //       $getholidays = DB::table('holidays')->get();
+
+
+  //       foreach ($getholidays as $date) {
+  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
+  //       }
+  //       $datess = array_unique($datess);
+  //     }
+  //     $countSick = count(array_diff($datess, $hdatess));
+
+
+  //     $appliedCasual = DB::table('applyleaves')
+  //       ->where('status', '!=', '2')
+  //       ->where('leavetype', $Casual->id)
+  //       ->where('createdby', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->get();
+
+  //     $countCasual = 0;
+  //     $casualDates = [];
+  //     foreach ($appliedCasual as $CasualLeave) {
+
+  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualLeave->from);
+  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualLeave->to);
+  //       $period = CarbonPeriod::create($fromDate, $toDate);
+
+
+  //       foreach ($period as $date) {
+  //         $casualDates[] = $date->format('Y-m-d');
+  //       }
+
+  //       $getholidays = DB::table('holidays')->get();
+
+  //       $hdatess = [];
+  //       foreach ($getholidays as $date) {
+  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
+  //       }
+  //       $casualDates = array_unique($casualDates);
+  //     }
+  //     $countCasual = count(array_diff($casualDates, $hdatess));
+
+  //     $appliedCasualafmnth = DB::table('applyleaves')
+  //       ->where('status', '!=', '2')
+  //       ->where('leavetype', $Casual->id)
+  //       ->where('createdby', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->where('created_at', '>', Carbon::createFromFormat('Y-m-d', $casualteam->joining_date)->addDays(90))
+  //       ->get();
+
+  //     $countCasualafmnth = 0;
+  //     $CasualafmnthDates = [];
+  //     foreach ($appliedCasualafmnth as $CasualafmnthLeave) {
+
+  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualafmnthLeave->from);
+  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualafmnthLeave->to);
+  //       $period = CarbonPeriod::create($fromDate, $toDate);
+
+
+  //       foreach ($period as $date) {
+  //         $CasualafmnthDates[] = $date->format('Y-m-d');
+  //       }
+
+  //       $getholidays = DB::table('holidays')->get();
+
+  //       $hdatess = [];
+  //       foreach ($getholidays as $date) {
+  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
+  //       }
+  //       $CasualafmnthDates = array_unique($CasualafmnthDates);
+  //     }
+  //     $countCasualafmnth = count(array_diff($CasualafmnthDates, $hdatess));
+
+
+
+
+
+  //     $appliedbirthday = DB::table('applyleaves')
+  //       ->where('status', '!=', '2')
+  //       ->where('leavetype', $birthday->id)
+  //       ->where('createdby', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->get();
+  //     $countbirthday = 0;
+  //     $birthdayDates = [];
+  //     foreach ($appliedbirthday as $birthdayLeave) {
+
+  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $birthdayLeave->from);
+  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $birthdayLeave->to);
+  //       $period = CarbonPeriod::create($fromDate, $toDate);
+
+
+  //       foreach ($period as $date) {
+  //         $birthdayDates[] = $date->format('Y-m-d');
+  //       }
+
+  //       $getholidays = DB::table('holidays')->get();
+
+  //       $hdatess = [];
+  //       foreach ($getholidays as $date) {
+  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
+  //       }
+  //       $birthdayDates = array_unique($birthdayDates);
+  //     }
+  //     $countbirthday = count(array_diff($birthdayDates, $hdatess));
+
+  //     //dd($diff_in_months);
+  //     $totalcountCasual = $Casual->noofdays * $diff_in_months;
+  //     //  dd($diff_in_months);
+
+  //     //  dd($countCasualafmnth);
+  //     $leavetaken = DB::table('leaveapprove')
+  //       ->where('year', '2023')->where('teammemberid', auth()->user()->teammember_id)->sum('totaldays');
+  //     $myapplyleaveDatas  = DB::table('applyleaves')
+  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+  //       ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
+  //       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+  //       ->where('applyleaves.createdby', auth()->user()->teammember_id)
+  //       // ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->latest()->get();
+  //       ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')
+  //       ->orderBy('created_at', 'DESC')
+  //       ->get();
+
+  //     $teamapplyleaveDatas  = DB::table('applyleaves')
+  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+  //       ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
+  //       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+  //       ->where('applyleaves.approver', auth()->user()->teammember_id)
+  //       ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->get();
+
+  //     $columns = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'ninghteen', 'twenty', 'twentyone', 'twentytwo', 'twentythree', 'twentyfour', 'twentyfive', 'twentysix', 'twentyseven', 'twentyeight', 'twentynine', 'thirty', 'thirtyone'];
+  //     $attendance = DB::table('attendances')
+  //       ->where('employee_name', auth()->user()->teammember_id)
+  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
+  //       ->get();
+
+  //     $clInAttendance = 0;
+  //     $slInAttendance = 0;
+  //     //dd($attendance);
+  //     foreach ($attendance as $item) {
+  //       foreach ($columns as $column) {
+  //         if ($item->$column === 'CL/C' || $item->$column === 'CL/A') {
+  //           $clInAttendance++;
+  //         }
+  //         if ($item->$column === 'SL/C' || $item->$column === 'SL/A') {
+  //           $slInAttendance++;
+  //         }
+  //       }
+  //     }
+
+
+  //     // dd($applyleaveDatas);
+  //     return view('backEnd.applyleave.index', compact('countCasualafmnth', 'leavetaken', 'teammonthcount', 'totalcountCasual', 'myapplyleaveDatas', 'teamapplyleaveDatas', 'birthday', 'countbirthday', 'Casual', 'Sick', 'countSick', 'countCasual', 'clInAttendance', 'slInAttendance'));
+  //   }
+  // }
 
   public function index()
   {
@@ -746,7 +1416,7 @@ class ApplyleaveController extends Controller
         ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
 
         ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->get();
-      // dd($applyleaveDatas);
+      // dd($teamapplyleaveDatas);
       return view('backEnd.applyleave.teamapplication', compact(
         'teammember',
         'countCasualafmnth',
@@ -1121,6 +1791,162 @@ class ApplyleaveController extends Controller
       // dd($applyleaveDatas);
       return view('backEnd.applyleave.index', compact('countCasualafmnth', 'leavetaken', 'teammonthcount', 'totalcountCasual', 'myapplyleaveDatas', 'teamapplyleaveDatas', 'birthday', 'countbirthday', 'Casual', 'Sick', 'countSick', 'countCasual', 'clInAttendance', 'slInAttendance'));
     }
+  }
+
+
+  public function filterDataAdmin(Request $request)
+  {
+    // dd($request);
+    if (auth()->user()->role_id == 13) {
+
+      //shahidfil
+      $teamname = $request->input('teamname');
+      $start = $request->input('start');
+      $end = $request->input('end');
+      $totalhours = $request->input('totalhours');
+      $partnerId = $request->input('partnersearch');
+
+
+      $query = DB::table('timesheetreport')
+        ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
+        ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
+        ->where('timesheetreport.teamid', auth()->user()->teammember_id)
+        ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
+        ->latest();
+
+      // teamname with othser field to  filter
+      if ($teamname) {
+        $query->where('timesheetreport.teamid', $teamname);
+      }
+
+      if ($teamname && $totalhours) {
+        $query->where(function ($q) use ($teamname, $totalhours) {
+          $q->where('timesheetreport.teamid', $teamname)
+            ->where('timesheetreport.totaltime', $totalhours);
+        });
+      }
+      if ($teamname && $partnerId) {
+        $query->where(function ($q) use ($teamname, $partnerId) {
+          $q->where('timesheetreport.teamid', $teamname)
+            ->where('timesheetreport.partnerid', $partnerId);
+        });
+      }
+
+      // patner or othse one data
+      if ($partnerId) {
+        $query->where('timesheetreport.partnerid', $partnerId);
+      }
+
+      if ($partnerId && $totalhours) {
+        $query->where(function ($q) use ($partnerId, $totalhours) {
+          $q->where('timesheetreport.partnerid', $partnerId)
+            ->where('timesheetreport.totaltime', $totalhours);
+        });
+      }
+
+      // total hour wise  wise or othser data
+      if ($totalhours) {
+        $query->where('timesheetreport.totaltime', $totalhours);
+      }
+      //! end date 
+      if ($start && $end) {
+        $query->where(function ($query) use ($start, $end) {
+          $query->whereBetween('timesheetreport.startdate', [$start, $end])
+            ->orWhereBetween('timesheetreport.enddate', [$start, $end])
+            ->orWhere(function ($query) use ($start, $end) {
+              $query->where('timesheetreport.startdate', '<=', $start)
+                ->where('timesheetreport.enddate', '>=', $end);
+            });
+        });
+      }
+    } else {
+      // dd($request);
+
+      $teamname = $request->input('teamname');
+      $start = $request->input('start');
+      $end = $request->input('end');
+      $totalhours = $request->input('totalhours');
+      $partnerId = $request->input('partnersearch');
+
+
+      $query = DB::table('timesheetreport')
+        ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
+        ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
+        ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
+        ->latest();
+
+      // teamname with othser field to  filter
+      if ($teamname) {
+        $query->where('timesheetreport.teamid', $teamname);
+      }
+
+      if ($teamname && $totalhours) {
+        $query->where(function ($q) use ($teamname, $totalhours) {
+          $q->where('timesheetreport.teamid', $teamname)
+            ->where('timesheetreport.totaltime', $totalhours);
+        });
+      }
+      if ($teamname && $partnerId) {
+        $query->where(function ($q) use ($teamname, $partnerId) {
+          $q->where('timesheetreport.teamid', $teamname)
+            ->where('timesheetreport.partnerid', $partnerId);
+        });
+      }
+
+      // patner or othse one data
+      if ($partnerId) {
+        $query->where('timesheetreport.partnerid', $partnerId);
+      }
+
+      if ($partnerId && $totalhours) {
+        $query->where(function ($q) use ($partnerId, $totalhours) {
+          $q->where('timesheetreport.partnerid', $partnerId)
+            ->where('timesheetreport.totaltime', $totalhours);
+        });
+      }
+
+      // total hour wise  wise or othser data
+      if ($totalhours) {
+        $query->where('timesheetreport.totaltime', $totalhours);
+      }
+      //! end date 
+      if ($start && $end) {
+        $query->where(function ($query) use ($start, $end) {
+          $query->whereBetween('timesheetreport.startdate', [$start, $end])
+            ->orWhereBetween('timesheetreport.enddate', [$start, $end])
+            ->orWhere(function ($query) use ($start, $end) {
+              $query->where('timesheetreport.startdate', '<=', $start)
+                ->where('timesheetreport.enddate', '>=', $end);
+            });
+        });
+      }
+    }
+    $filteredDataaa = $query->get();
+
+    // maping double date ************
+    $groupedData = $filteredDataaa->groupBy(function ($item) {
+      return $item->team_member . '|' . $item->week;
+    })->map(function ($group) {
+      $firstItem = $group->first();
+
+      return (object)[
+        'id' => $firstItem->id,
+        'teamid' => $firstItem->teamid,
+        'week' => $firstItem->week,
+        'totaldays' => $group->sum('totaldays'),
+        'totaltime' => $group->sum('totaltime'),
+        'startdate' => $firstItem->startdate,
+        'enddate' => $firstItem->enddate,
+        'partnername' => $firstItem->partnername,
+        'created_at' => $firstItem->created_at,
+        'team_member' => $firstItem->team_member,
+        'partnerid' => $firstItem->partnerid,
+      ];
+    });
+
+
+    $filteredData = collect($groupedData->values());
+    return response()->json($filteredData);
   }
 
   /**

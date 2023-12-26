@@ -160,6 +160,8 @@ Route::get('/testreminder', [TimesheetnotfillReminder::class, 'handle']);
 //? only testing purpose end
 
 //? 
+//? apply leave filtering 
+Route::get('/filtering-applyleve', [ApplyleaveController::class, 'filterDataAdmin']);
 //? exem leave request
 Route::get('/examleaverequest/{id}',  [ApplyleaveController::class, 'exampleleaveshow']);
 Route::get('/examleaverequestlist', [ApplyleaveController::class, 'examleaverequestlist']);
