@@ -125,6 +125,7 @@ class TimesheetController extends Controller
       ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
       ->latest()->get();
 
+
     // maping double date ************
     $groupedData = $get_datess->groupBy(function ($item) {
       return $item->team_member . '|' . $item->week;
@@ -641,10 +642,142 @@ class TimesheetController extends Controller
 
     return view('backEnd.timesheet.myteamindex', compact('get_date'));
   }
-  //! running code done 
+  //! running code done 22-12-23
+
+  // public function filterDataAdmin(Request $request)
+  // {
+  //   // dd($request);
+  //   if (auth()->user()->role_id == 13) {
+  //     //shahidfil
+  //     $teamname = $request->input('teamname');
+  //     $start = $request->input('start');
+  //     $end = $request->input('end');
+  //     $totalhours = $request->input('totalhours');
+  //     $partnerId = $request->input('partnersearch');
+
+
+  //     $query = DB::table('timesheetreport')
+  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
+  //       ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
+  //       ->where('timesheetreport.teamid', auth()->user()->teammember_id)
+  //       ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
+  //       ->latest();
+
+  //     // teamname with othser field to  filter
+  //     if ($teamname) {
+  //       $query->where('timesheetreport.teamid', $teamname);
+  //     }
+
+  //     if ($teamname && $totalhours) {
+  //       $query->where(function ($q) use ($teamname, $totalhours) {
+  //         $q->where('timesheetreport.teamid', $teamname)
+  //           ->where('timesheetreport.totaltime', $totalhours);
+  //       });
+  //     }
+  //     if ($teamname && $partnerId) {
+  //       $query->where(function ($q) use ($teamname, $partnerId) {
+  //         $q->where('timesheetreport.teamid', $teamname)
+  //           ->where('timesheetreport.partnerid', $partnerId);
+  //       });
+  //     }
+
+  //     // patner or othse one data
+  //     if ($partnerId) {
+  //       $query->where('timesheetreport.partnerid', $partnerId);
+  //     }
+
+  //     if ($partnerId && $totalhours) {
+  //       $query->where(function ($q) use ($partnerId, $totalhours) {
+  //         $q->where('timesheetreport.partnerid', $partnerId)
+  //           ->where('timesheetreport.totaltime', $totalhours);
+  //       });
+  //     }
+
+  //     // total hour wise  wise or othser data
+  //     if ($totalhours) {
+  //       $query->where('timesheetreport.totaltime', $totalhours);
+  //     }
+  //     //! end date 
+  //     if ($start && $end) {
+  //       $query->where(function ($query) use ($start, $end) {
+  //         $query->whereBetween('timesheetreport.startdate', [$start, $end])
+  //           ->orWhereBetween('timesheetreport.enddate', [$start, $end])
+  //           ->orWhere(function ($query) use ($start, $end) {
+  //             $query->where('timesheetreport.startdate', '<=', $start)
+  //               ->where('timesheetreport.enddate', '>=', $end);
+  //           });
+  //       });
+  //     }
+  //   } else {
+
+  //     $teamname = $request->input('teamname');
+  //     $start = $request->input('start');
+  //     $end = $request->input('end');
+  //     $totalhours = $request->input('totalhours');
+  //     $partnerId = $request->input('partnersearch');
+
+
+  //     $query = DB::table('timesheetreport')
+  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
+  //       ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
+  //       ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
+  //       ->latest();
+
+  //     // teamname with othser field to  filter
+  //     if ($teamname) {
+  //       $query->where('timesheetreport.teamid', $teamname);
+  //     }
+
+  //     if ($teamname && $totalhours) {
+  //       $query->where(function ($q) use ($teamname, $totalhours) {
+  //         $q->where('timesheetreport.teamid', $teamname)
+  //           ->where('timesheetreport.totaltime', $totalhours);
+  //       });
+  //     }
+  //     if ($teamname && $partnerId) {
+  //       $query->where(function ($q) use ($teamname, $partnerId) {
+  //         $q->where('timesheetreport.teamid', $teamname)
+  //           ->where('timesheetreport.partnerid', $partnerId);
+  //       });
+  //     }
+
+  //     // patner or othse one data
+  //     if ($partnerId) {
+  //       $query->where('timesheetreport.partnerid', $partnerId);
+  //     }
+
+  //     if ($partnerId && $totalhours) {
+  //       $query->where(function ($q) use ($partnerId, $totalhours) {
+  //         $q->where('timesheetreport.partnerid', $partnerId)
+  //           ->where('timesheetreport.totaltime', $totalhours);
+  //       });
+  //     }
+
+  //     // total hour wise  wise or othser data
+  //     if ($totalhours) {
+  //       $query->where('timesheetreport.totaltime', $totalhours);
+  //     }
+  //     //! end date 
+  //     if ($start && $end) {
+  //       $query->where(function ($query) use ($start, $end) {
+  //         $query->whereBetween('timesheetreport.startdate', [$start, $end])
+  //           ->orWhereBetween('timesheetreport.enddate', [$start, $end])
+  //           ->orWhere(function ($query) use ($start, $end) {
+  //             $query->where('timesheetreport.startdate', '<=', $start)
+  //               ->where('timesheetreport.enddate', '>=', $end);
+  //           });
+  //       });
+  //     }
+  //   }
+  //   $filteredData = $query->get();
+
+  //   return response()->json($filteredData);
+  // }
   public function filterDataAdmin(Request $request)
   {
+    // dd($request);
     if (auth()->user()->role_id == 13) {
+
       //shahidfil
       $teamname = $request->input('teamname');
       $start = $request->input('start');
@@ -706,6 +839,7 @@ class TimesheetController extends Controller
         });
       }
     } else {
+      // dd($request);
 
       $teamname = $request->input('teamname');
       $start = $request->input('start');
@@ -766,8 +900,31 @@ class TimesheetController extends Controller
         });
       }
     }
-    $filteredData = $query->get();
+    $filteredDataaa = $query->get();
 
+    // maping double date ************
+    $groupedData = $filteredDataaa->groupBy(function ($item) {
+      return $item->team_member . '|' . $item->week;
+    })->map(function ($group) {
+      $firstItem = $group->first();
+
+      return (object)[
+        'id' => $firstItem->id,
+        'teamid' => $firstItem->teamid,
+        'week' => $firstItem->week,
+        'totaldays' => $group->sum('totaldays'),
+        'totaltime' => $group->sum('totaltime'),
+        'startdate' => $firstItem->startdate,
+        'enddate' => $firstItem->enddate,
+        'partnername' => $firstItem->partnername,
+        'created_at' => $firstItem->created_at,
+        'team_member' => $firstItem->team_member,
+        'partnerid' => $firstItem->partnerid,
+      ];
+    });
+
+
+    $filteredData = collect($groupedData->values());
     return response()->json($filteredData);
   }
 

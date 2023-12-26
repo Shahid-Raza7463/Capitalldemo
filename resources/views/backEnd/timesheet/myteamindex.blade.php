@@ -35,79 +35,7 @@
                       {{-- filtering functionality --}}
 
                       {{-- ! runnig for patner --}}
-                      {{-- <div class="row row-sm">
-                          <div class="col-2">
-                              <div class="form-group">
-                                  <label class="font-weight-600">All Partner</label>
-                                  <select class="language form-control" id="category1" name="partnersearch">
-                                      <option value="">Please Select One</option>
-                                      @foreach ($partner as $teammemberData)
-                                          <option value="{{ $teammemberData->id }}">
-                                              {{ $teammemberData->team_member }}
-                                          </option>
-                                      @endforeach
-                                  </select>
 
-                              </div>
-                          </div>
-
-                          <div class="col-2">
-                              <div class="form-group">
-                                  <label class="font-weight-600">Start Date</label>
-                                  <input type="date" class="form-control" id="start" name="start">
-
-                              </div>
-                          </div>
-                          <div class="col-2">
-                              <div class="form-group">
-                                  <label class="font-weight-600">End Date</label>
-                                  <input type="date" class="form-control" name="end" id="end">
-                              </div>
-                          </div>
-                          <div class="col-3">
-                              <div class="form-group">
-                                  <label class="font-weight-600">Total Timesheet Filled Day</label>
-                                  <select class="language form-control" id="category3" name="totaldays">
-                                      <option value="">Please Select One</option>
-                                      @php
-                                          $displayedValues = [];
-                                      @endphp
-                                      @foreach ($get_date as $jobDatas)
-                                          @if (!in_array($jobDatas->totaldays, $displayedValues))
-                                              <option value="{{ $jobDatas->totaldays }}">
-                                                  {{ $jobDatas->totaldays }}
-                                              </option>
-                                              @php
-                                                  $displayedValues[] = $jobDatas->totaldays;
-                                              @endphp
-                                          @endif
-                                      @endforeach
-                                  </select>
-                              </div>
-                          </div>
-
-                          <div class="col-3">
-                              <div class="form-group">
-                                  <label class="font-weight-600">Total Hour</label>
-                                  <select class="language form-control" id="category4" name="totalhours">
-                                      <option value="">Please Select One</option>
-                                      @php
-                                          $displayedValues = [];
-                                      @endphp
-                                      @foreach ($get_date as $jobData)
-                                          @if (!in_array($jobData->totaltime, $displayedValues))
-                                              <option value="{{ $jobData->totaltime }}">
-                                                  {{ $jobData->totaltime }}
-                                              </option>
-                                              @php
-                                                  $displayedValues[] = $jobData->totaltime;
-                                              @endphp
-                                          @endif
-                                      @endforeach
-                                  </select>
-                              </div>
-                          </div>
-                      </div> --}}
                       <div class="row row-sm">
                           <div class="col-3">
                               <div class="form-group">
@@ -146,28 +74,6 @@
                                   <input type="date" class="form-control" name="end" id="end">
                               </div>
                           </div>
-                          {{-- <div class="col-3">
-                              <div class="form-group">
-                                  <label class="font-weight-600">Total Timesheet Filled Day</label>
-                                  <select class="language form-control" id="category3" name="totaldays">
-                                      <option value="">Please Select One</option>
-                                      @php
-                                          $displayedValues = [];
-                                      @endphp
-                                      @foreach ($get_date as $jobDatas)
-                                          @if (!in_array($jobDatas->totaldays, $displayedValues))
-                                              <option value="{{ $jobDatas->totaldays }}">
-                                                  {{ $jobDatas->totaldays }}
-                                              </option>
-                                              @php
-                                                  $displayedValues[] = $jobDatas->totaldays;
-                                              @endphp
-                                          @endif
-                                      @endforeach
-                                  </select>
-                              </div>
-                          </div> --}}
-
                           <div class="col-3">
                               <div class="form-group">
                                   <label class="font-weight-600">Total Hour</label>
@@ -189,37 +95,6 @@
                                   </select>
                               </div>
                           </div>
-                          {{-- <div class="col-2">
-                              <div class="form-group">
-                                  <label class="font-weight-600">Partner</label>
-                                  <select class="language form-control" id="category1" name="partnersearch">
-                                      <option value="">Please Select One</option>
-                                      @php
-                                          $displayedValues = [];
-                                      @endphp
-                                      @foreach ($get_date as $jobDatas)
-                                          @if (!in_array($jobDatas->partnername, $displayedValues))
-                                              <option value="{{ $jobDatas->partnerid }}">
-                                                  {{ $jobDatas->partnername }}
-                                              </option>
-                                              @php
-                                                  $displayedValues[] = $jobDatas->partnername;
-                                              @endphp
-                                          @endif
-                                      @endforeach
-                                  </select> --}}
-
-                          {{-- <select class="language form-control" id="category1" name="partnersearch">
-                                    <option value="">Please Select One</option>
-                                    @foreach ($partner as $teammemberData)
-                                        <option value="{{ $teammemberData->id }}">
-                                            {{ $teammemberData->team_member }}
-                                        </option>
-                                    @endforeach
-                                </select> --}}
-                          {{-- 
-                              </div>
-                          </div> --}}
                       </div>
 
                       <table class="table display table-bordered table-striped table-hover basic">
@@ -525,7 +400,7 @@
                                   '<td>' + item.week + '</td>' +
                                   '<td>' + item.totaldays + '</td>' +
                                   '<td>' + item.totaltime + '</td>' +
-                                  '<td>' + item.partnername + '</td>' +
+                                  //   '<td>' + item.partnername + '</td>' +
                                   '</tr>');
                           });
                           //   remove pagination after filter
@@ -581,7 +456,7 @@
                                   '<td>' + item.week + '</td>' +
                                   '<td>' + item.totaldays + '</td>' +
                                   '<td>' + item.totaltime + '</td>' +
-                                  '<td>' + item.partnername + '</td>' +
+                                  //   '<td>' + item.partnername + '</td>' +
                                   '</tr>');
                           });
                           //   remove pagination after filter
@@ -637,7 +512,7 @@
                                   '<td>' + item.week + '</td>' +
                                   '<td>' + item.totaldays + '</td>' +
                                   '<td>' + item.totaltime + '</td>' +
-                                  '<td>' + item.partnername + '</td>' +
+                                  //   '<td>' + item.partnername + '</td>' +
                                   '</tr>');
                           });
                           //   remove pagination after filter
@@ -687,7 +562,7 @@
                                   '<td>' + item.week + '</td>' +
                                   '<td>' + item.totaldays + '</td>' +
                                   '<td>' + item.totaltime + '</td>' +
-                                  '<td>' + item.partnername + '</td>' +
+                                  //   '<td>' + item.partnername + '</td>' +
                                   '</tr>');
                           });
                           //   remove pagination after filter
@@ -739,7 +614,7 @@
                                   '<td>' + item.week + '</td>' +
                                   '<td>' + item.totaldays + '</td>' +
                                   '<td>' + item.totaltime + '</td>' +
-                                  '<td>' + item.partnername + '</td>' +
+                                  //   '<td>' + item.partnername + '</td>' +
                                   '</tr>');
                           });
                           //   remove pagination after filter
