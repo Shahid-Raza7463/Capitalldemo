@@ -162,6 +162,7 @@ Route::get('/testreminder', [TimesheetnotfillReminder::class, 'handle']);
 //? 
 //? apply leave filtering 
 Route::get('/filtering-applyleve', [ApplyleaveController::class, 'filterDataAdmin']);
+// Route::get('/filter-dataadmin', [TimesheetController::class, 'filterDataAdmin']);
 //? exem leave request
 Route::get('/examleaverequest/{id}',  [ApplyleaveController::class, 'exampleleaveshow']);
 Route::get('/examleaverequestlist', [ApplyleaveController::class, 'examleaverequestlist']);
@@ -1068,6 +1069,9 @@ Route::group(['middleware' => ['twofactor']], function () {
 
   // filter on timesheet routes
   // Route::get('/testclient', [TimesheetController::class, 'testclient']);
+  // vcvc
+
+  // it is implemented submitte timesheet tab on admin and patner 
   Route::get('/filter-dataadmin', [TimesheetController::class, 'filterDataAdmin']);
 
   // timesheet routes

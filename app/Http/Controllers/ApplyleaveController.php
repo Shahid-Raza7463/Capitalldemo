@@ -372,7 +372,7 @@ class ApplyleaveController extends Controller
   //   }
   // }
 
-  // exam leave request
+  // exam leave request after comming 
   public function examleaverequestlist()
   {
     if (auth()->user()->role_id == 11) {
@@ -1759,14 +1759,14 @@ class ApplyleaveController extends Controller
         ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')
         ->orderBy('created_at', 'DESC')
         ->get();
-
+      // dxdxdx
       $teamapplyleaveDatas  = DB::table('applyleaves')
         ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
         ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
         ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
         ->where('applyleaves.approver', auth()->user()->teammember_id)
         ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->get();
-
+      // dd($teamapplyleaveDatas);
       $columns = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'ninghteen', 'twenty', 'twentyone', 'twentytwo', 'twentythree', 'twentyfour', 'twentyfive', 'twentysix', 'twentyseven', 'twentyeight', 'twentynine', 'thirty', 'thirtyone'];
       $attendance = DB::table('attendances')
         ->where('employee_name', auth()->user()->teammember_id)
@@ -1793,159 +1793,193 @@ class ApplyleaveController extends Controller
     }
   }
 
-
+  // vxvxvx
   public function filterDataAdmin(Request $request)
   {
-    // dd($request);
     if (auth()->user()->role_id == 13) {
+      // apply leave filter on patner 
+      $teamname = $request->input('employee');
+      $leavetype = $request->input('leave');
+      // if ($startdate != null || $endtdate != null) {
+      $startdate = $request->input('start');
+      $startdate1 = date('Y-m-d H:i:s', strtotime($startdate));
+      $endtdate = $request->input('end');
+      $endtdate1 = date('Y-m-d H:i:s', strtotime($endtdate));
+      // }
+      $statusdata = $request->input('status');
 
-      //shahidfil
-      $teamname = $request->input('teamname');
-      $start = $request->input('start');
-      $end = $request->input('end');
-      $totalhours = $request->input('totalhours');
-      $partnerId = $request->input('partnersearch');
+      $query  = DB::table('applyleaves')
+        ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+        ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
+        ->leftjoin('teammembers as approvername', 'approvername.id', 'applyleaves.approver')
+        ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+        ->where('applyleaves.approver', auth()->user()->teammember_id)
+        ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name', 'approvername.team_member as approvernames');
 
 
-      $query = DB::table('timesheetreport')
-        ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-        ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-        ->where('timesheetreport.teamid', auth()->user()->teammember_id)
-        ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-        ->latest();
-
-      // teamname with othser field to  filter
+      // According employee
       if ($teamname) {
-        $query->where('timesheetreport.teamid', $teamname);
+        $query->where('applyleaves.createdby', $teamname);
+      }
+      // According leave type
+      if ($leavetype) {
+        $query->where('applyleaves.leavetype', $leavetype);
       }
 
-      if ($teamname && $totalhours) {
-        $query->where(function ($q) use ($teamname, $totalhours) {
-          $q->where('timesheetreport.teamid', $teamname)
-            ->where('timesheetreport.totaltime', $totalhours);
-        });
-      }
-      if ($teamname && $partnerId) {
-        $query->where(function ($q) use ($teamname, $partnerId) {
-          $q->where('timesheetreport.teamid', $teamname)
-            ->where('timesheetreport.partnerid', $partnerId);
-        });
+      // According Status 
+      if ($statusdata != null) {
+        if ($statusdata == 0) {
+          $query->where('applyleaves.status', 0);
+        } elseif ($statusdata == 1) {
+          $query->where('applyleaves.status', 1);
+        } elseif ($statusdata == 2) {
+          $query->where('applyleaves.status', 2);
+        }
       }
 
-      // patner or othse one data
-      if ($partnerId) {
-        $query->where('timesheetreport.partnerid', $partnerId);
+      // According strat date and end date 
+      if ($teamname == null && $leavetype == null && $statusdata == null) {
+        $query->whereBetween('applyleaves.created_at', [$startdate1, $endtdate1]);
+      }
+      // According stratdate and enddate and employee
+      if ($startdate != null && $endtdate != null && $teamname != null) {
+        $query->whereBetween('applyleaves.created_at', [$startdate1, $endtdate1])
+          ->where('applyleaves.createdby', $teamname);
       }
 
-      if ($partnerId && $totalhours) {
-        $query->where(function ($q) use ($partnerId, $totalhours) {
-          $q->where('timesheetreport.partnerid', $partnerId)
-            ->where('timesheetreport.totaltime', $totalhours);
+      // According employee and leave type
+      if ($teamname && $leavetype) {
+        $query->where(function ($q) use ($teamname, $leavetype) {
+          $q->where('applyleaves.createdby', $teamname)
+            ->where('applyleaves.leavetype', $leavetype);
         });
+      }
+      // According Status and teamname
+      if ($statusdata != null && $teamname != null) {
+        if ($statusdata == 0 && $teamname != null) {
+          $query->where('applyleaves.status', 0)
+            ->where('applyleaves.createdby', $teamname);
+        } elseif ($statusdata == 1 && $teamname != null) {
+          $query->where('applyleaves.status', 1)
+            ->where('applyleaves.createdby', $teamname);
+        } elseif ($statusdata == 2 && $teamname != null) {
+          $query->where('applyleaves.status', 2)
+            ->where('applyleaves.createdby', $teamname);
+        }
       }
 
-      // total hour wise  wise or othser data
-      if ($totalhours) {
-        $query->where('timesheetreport.totaltime', $totalhours);
-      }
-      //! end date 
-      if ($start && $end) {
-        $query->where(function ($query) use ($start, $end) {
-          $query->whereBetween('timesheetreport.startdate', [$start, $end])
-            ->orWhereBetween('timesheetreport.enddate', [$start, $end])
-            ->orWhere(function ($query) use ($start, $end) {
-              $query->where('timesheetreport.startdate', '<=', $start)
-                ->where('timesheetreport.enddate', '>=', $end);
-            });
-        });
+      // According Status and leave type 
+      if ($statusdata != null && $leavetype != null) {
+        if ($statusdata == 0 && $leavetype != null) {
+          $query->where('applyleaves.status', 0)
+            ->where('applyleaves.leavetype', $leavetype);
+        } elseif ($statusdata == 1 && $leavetype != null) {
+          $query->where('applyleaves.status', 1)
+            ->where('applyleaves.leavetype', $leavetype);
+        } elseif ($statusdata == 2 && $leavetype != null) {
+          $query->where('applyleaves.status', 2)
+            ->where('applyleaves.leavetype', $leavetype);
+        }
       }
     } else {
-      // dd($request);
+      // apply leave filter on admin 
+      $teamname = $request->input('employee');
+      // dd($teamname);
+      $leavetype = $request->input('leave');
+      // if ($startdate != null || $endtdate != null) {
+      $startdate = $request->input('start');
+      $startdate1 = date('Y-m-d H:i:s', strtotime($startdate));
+      $endtdate = $request->input('end');
+      $endtdate1 = date('Y-m-d H:i:s', strtotime($endtdate));
+      // }
+      $statusdata = $request->input('status');
 
-      $teamname = $request->input('teamname');
-      $start = $request->input('start');
-      $end = $request->input('end');
-      $totalhours = $request->input('totalhours');
-      $partnerId = $request->input('partnersearch');
+      $startperioddata = $request->input('startperiod');
+      $endperioddata = $request->input('endperiod');
+
+      $query  = DB::table('applyleaves')
+        ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+        ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
+        ->leftjoin('teammembers as approvername', 'approvername.id', 'applyleaves.approver')
+        ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+        ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name', 'approvername.team_member as approvernames');
 
 
-      $query = DB::table('timesheetreport')
-        ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-        ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-        ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-        ->latest();
+      // According leave periode 
+      if ($startperioddata && $endperioddata) {
+        // $query->where('applyleaves.from', $startperioddata);
+        // $query->whereBetween('applyleaves.from', [$startperioddata, $endperioddata]);
+        $query->where('applyleaves.from', '>=', $startperioddata)
+          ->where('applyleaves.to', '<=', $endperioddata);
+      }
 
-      // teamname with othser field to  filter
+      // According employee
       if ($teamname) {
-        $query->where('timesheetreport.teamid', $teamname);
+        $query->where('applyleaves.createdby', $teamname);
+      }
+      // According leave type
+      if ($leavetype) {
+        $query->where('applyleaves.leavetype', $leavetype);
       }
 
-      if ($teamname && $totalhours) {
-        $query->where(function ($q) use ($teamname, $totalhours) {
-          $q->where('timesheetreport.teamid', $teamname)
-            ->where('timesheetreport.totaltime', $totalhours);
-        });
-      }
-      if ($teamname && $partnerId) {
-        $query->where(function ($q) use ($teamname, $partnerId) {
-          $q->where('timesheetreport.teamid', $teamname)
-            ->where('timesheetreport.partnerid', $partnerId);
-        });
+      // According Status 
+      if ($statusdata != null) {
+        if ($statusdata == 0) {
+          $query->where('applyleaves.status', 0);
+        } elseif ($statusdata == 1) {
+          $query->where('applyleaves.status', 1);
+        } elseif ($statusdata == 2) {
+          $query->where('applyleaves.status', 2);
+        }
       }
 
-      // patner or othse one data
-      if ($partnerId) {
-        $query->where('timesheetreport.partnerid', $partnerId);
+      // According strat date and end date 
+      if ($teamname == null && $leavetype == null && $statusdata == null && $startperioddata == null && $endperioddata == null) {
+        $query->whereBetween('applyleaves.created_at', [$startdate1, $endtdate1]);
+      }
+      // According stratdate and enddate and employee
+      if ($startdate != null && $endtdate != null && $teamname != null) {
+        $query->whereBetween('applyleaves.created_at', [$startdate1, $endtdate1])
+          ->where('applyleaves.createdby', $teamname);
       }
 
-      if ($partnerId && $totalhours) {
-        $query->where(function ($q) use ($partnerId, $totalhours) {
-          $q->where('timesheetreport.partnerid', $partnerId)
-            ->where('timesheetreport.totaltime', $totalhours);
+      // According employee and leave type
+      if ($teamname && $leavetype) {
+        $query->where(function ($q) use ($teamname, $leavetype) {
+          $q->where('applyleaves.createdby', $teamname)
+            ->where('applyleaves.leavetype', $leavetype);
         });
+      }
+      // According Status and teamname
+      if ($statusdata != null && $teamname != null) {
+        if ($statusdata == 0 && $teamname != null) {
+          $query->where('applyleaves.status', 0)
+            ->where('applyleaves.createdby', $teamname);
+        } elseif ($statusdata == 1 && $teamname != null) {
+          $query->where('applyleaves.status', 1)
+            ->where('applyleaves.createdby', $teamname);
+        } elseif ($statusdata == 2 && $teamname != null) {
+          $query->where('applyleaves.status', 2)
+            ->where('applyleaves.createdby', $teamname);
+        }
       }
 
-      // total hour wise  wise or othser data
-      if ($totalhours) {
-        $query->where('timesheetreport.totaltime', $totalhours);
-      }
-      //! end date 
-      if ($start && $end) {
-        $query->where(function ($query) use ($start, $end) {
-          $query->whereBetween('timesheetreport.startdate', [$start, $end])
-            ->orWhereBetween('timesheetreport.enddate', [$start, $end])
-            ->orWhere(function ($query) use ($start, $end) {
-              $query->where('timesheetreport.startdate', '<=', $start)
-                ->where('timesheetreport.enddate', '>=', $end);
-            });
-        });
+      // According Status and leave type 
+      if ($statusdata != null && $leavetype != null) {
+        if ($statusdata == 0 && $leavetype != null) {
+          $query->where('applyleaves.status', 0)
+            ->where('applyleaves.leavetype', $leavetype);
+        } elseif ($statusdata == 1 && $leavetype != null) {
+          $query->where('applyleaves.status', 1)
+            ->where('applyleaves.leavetype', $leavetype);
+        } elseif ($statusdata == 2 && $leavetype != null) {
+          $query->where('applyleaves.status', 2)
+            ->where('applyleaves.leavetype', $leavetype);
+        }
       }
     }
-    $filteredDataaa = $query->get();
-
-    // maping double date ************
-    $groupedData = $filteredDataaa->groupBy(function ($item) {
-      return $item->team_member . '|' . $item->week;
-    })->map(function ($group) {
-      $firstItem = $group->first();
-
-      return (object)[
-        'id' => $firstItem->id,
-        'teamid' => $firstItem->teamid,
-        'week' => $firstItem->week,
-        'totaldays' => $group->sum('totaldays'),
-        'totaltime' => $group->sum('totaltime'),
-        'startdate' => $firstItem->startdate,
-        'enddate' => $firstItem->enddate,
-        'partnername' => $firstItem->partnername,
-        'created_at' => $firstItem->created_at,
-        'team_member' => $firstItem->team_member,
-        'partnerid' => $firstItem->partnerid,
-      ];
-    });
-
-
-    $filteredData = collect($groupedData->values());
+    $filteredData = $query->get();
+    // if holyday days occure error in future then find holiday according blade file and merge data with $filteredData 
     return response()->json($filteredData);
   }
 

@@ -605,19 +605,17 @@ class TimesheetController extends Controller
 
   //   return view('backEnd.timesheet.myteamindex', compact('get_date'));
   // }
-  // patner zxzx
+
+  // Submmited timesheet data on patner
   public function partnersubmitted()
   {
-    // 844
-    // dd(auth()->user());
+
     $get_datess = DB::table('timesheetreport')
       ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
       ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
       ->where('timesheetreport.teamid', auth()->user()->teammember_id)
       ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
       ->latest()->get();
-    // dd($get_date);
-
 
     // maping week wise data 
     $groupedData = $get_datess->groupBy('week')->map(function ($group) {
@@ -773,19 +771,30 @@ class TimesheetController extends Controller
 
   //   return response()->json($filteredData);
   // }
+
+  // it is implemented submitte timesheet tab on admin and patner 
   public function filterDataAdmin(Request $request)
   {
-    // dd($request);
+
+    // for patner 
     if (auth()->user()->role_id == 13) {
 
-      //shahidfil
       $teamname = $request->input('teamname');
       $start = $request->input('start');
       $end = $request->input('end');
       $totalhours = $request->input('totalhours');
       $partnerId = $request->input('partnersearch');
 
+      // submitted teamtimesheet tab on patner then use this below query 
 
+      // $query = DB::table('timesheetreport')
+      //   ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
+      //   ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
+      //   ->where('timesheetreport.partnerid', auth()->user()->teammember_id)
+      //   ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
+      //   ->latest();
+
+      // submitted timesheet tab on patner 
       $query = DB::table('timesheetreport')
         ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
         ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
@@ -838,7 +847,9 @@ class TimesheetController extends Controller
             });
         });
       }
-    } else {
+    }
+    // for Admin 
+    else {
       // dd($request);
 
       $teamname = $request->input('teamname');
@@ -925,6 +936,7 @@ class TimesheetController extends Controller
 
 
     $filteredData = collect($groupedData->values());
+    // dd($filteredData);
     return response()->json($filteredData);
   }
 
