@@ -4,10 +4,12 @@
 <!--Content Header (Page header)-->
 <div class="content-header row align-items-center m-0">
     <nav aria-label="breadcrumb" class="col-sm-4 order-sm-last mb-3 mb-sm-0 p-0 ">
+		 @if(Auth::user()->role_id == 11)
         <ol class="breadcrumb d-inline-flex font-weight-600 fs-13 bg-white mb-0 float-sm-right">
             <li class="breadcrumb-item"><a href="{{ url('article/create', $id)}}">Add Knowledge</a></li>
             <li class="breadcrumb-item active">+</li>
         </ol>
+		@endif
     </nav>
     <div class="col-sm-8 header-title p-0">
         <div class="media">
@@ -35,9 +37,9 @@
                             <th>Related To</th>
                             <th>File</th>
                             <th>Date</th>
-                            <th>Created by</th>
-                            <th>Edit</th>
-                            <th>Delete</th>
+                              <!--    <th>Created by</th>
+                      <th>Edit</th>
+                            <th>Delete</th>-->
                             
                         </tr>
                     </thead>
@@ -49,8 +51,8 @@
                             <td><a  target="blank"
                                 href="{{ asset('backEnd/image/article/'.$articleData->file) }}">{{ $articleData->file }}</a> </td>
                             <td>{{date('d-M-Y', strtotime($articleData->created_at))}}</td>
-                            <td>{{$articleData->team_member }}</td>
-                            <td>  <a href="{{route('article.edit', $articleData->id)}}"  class="btn btn-info-soft btn-sm"><i
+                              <!--   <td>{{$articleData->team_member }}</td>
+                       <td>  <a href="{{route('article.edit', $articleData->id)}}"  class="btn btn-info-soft btn-sm"><i
                                 class="far fa-edit"></i></a></td>
                                 <a href="http://kgsomani.test/clientdocument/destroy/48" onclick="return confirm('Are you sure you want to delete this item?');" ></a>                               
                                <td>  <form action="{{route('article.destroy', $articleData->id)}}"  method="POST">
@@ -58,7 +60,7 @@
                                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
                                 <button onclick="return confirm('Are you sure you want to delete this item?');" class="btn btn-danger-soft btn-sm"><i class="far fa-trash-alt"></i></button>
                                 </form>
-                            </td>
+                            </td>-->
                                
                           
                         </tr>

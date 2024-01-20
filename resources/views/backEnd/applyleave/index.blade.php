@@ -144,14 +144,7 @@
                           aria-labelledby="pills-home-tab">
                           <div class="table-responsive example">
 
-                              @if (session('message'))
-                                  <div class="alert alert-success">
-                                      {{ session('message') }}
-                                  </div>
-                              @endif
                               <div class="table-responsive">
-                                  {{-- <table class="table display table-bordered table-striped table-hover basic"> --}}
-
                                   <table id="examplee" class="table display table-bordered table-striped table-hover">
                                       <thead>
                                           <tr>
@@ -160,10 +153,11 @@
                                               <th>Leave Type</th>
                                               <th>Approver</th>
                                               <th>Reason for Leave</th>
-                                              <th> Leave Period</th>
+                                              <th>Leave Period</th>
                                               <th>Days</th>
                                               <th>Status</th>
-                                              {{-- exam leave request --}}
+                                              <th>Reason For Reject</th>
+
                                               @foreach ($myapplyleaveDatas as $applyleaveDatas)
                                                   @if ($applyleaveDatas->leavetype == 11 && $applyleaveDatas->status == 1 && $loop->first)
                                                       <th>Action</th>
@@ -172,7 +166,9 @@
                                           </tr>
                                       </thead>
                                       <tbody>
-
+                                          {{-- @php
+                                              dd($myapplyleaveDatas);
+                                          @endphp --}}
                                           @foreach ($myapplyleaveDatas as $applyleaveDatas)
                                               <tr>
                                                   <td>{{ date('F d,Y', strtotime($applyleaveDatas->created_at)) ?? '' }}
@@ -234,7 +230,7 @@
                                                           <span class="badge badge-danger">Rejected</span>
                                                       @endif
                                                   </td>
-                                                  {{-- exam leave request --}}
+                                                  <td>{{ $applyleaveDatas->remark ?? '' }}</td>
                                                   <td>
                                                       @if ($applyleaveDatas->leavetype == 11 && $applyleaveDatas->status == 1 && $loop->first)
                                                           <button class="btn btn-danger" data-toggle="modal"
@@ -337,6 +333,7 @@
                                           @endforeach
                                       </tbody>
                                   </table>
+
                               </div>
 
 
@@ -450,6 +447,7 @@
                                           <th>Date of Request</th>
 
                                           <th>Status</th>
+                                          <th>Reason For Reject</th>
 
 
                                       </tr>
@@ -514,6 +512,7 @@
                                                       <span class="badge badge-danger">Rejected</span>
                                                   @endif
                                               </td>
+                                              <td>{{ $applyleaveDatas->remark ?? '' }}</td>
 
                                           </tr>
                                       @endforeach
@@ -531,6 +530,8 @@
       </div>
       <!--/.body content-->
   @endsection
+
+
 
 
   <script src="https://code.jquery.com/jquery-3.5.1.js"></script>

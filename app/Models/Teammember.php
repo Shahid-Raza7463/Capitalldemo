@@ -32,7 +32,7 @@ class Teammember extends Model
         if ($value) {
             return url('backEnd/image/teammember/addressupload/' . $value);
         } else {
-            return url('backEnd/image/dummy.png');
+           return env('APP_CMS_ALL').'';
         }
     }
     public function title()

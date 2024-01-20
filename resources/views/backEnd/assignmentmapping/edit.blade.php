@@ -23,8 +23,8 @@
                                     <div class="form-group">
                                         <label class="font-weight-600">Period End</label>
                                         <input type="date" name="periodend"
-                                            value="{{ $assignmentmapping->periodend ?? '' }}" class=" form-control"
-                                            placeholder="Enter Perio End">
+                                            value="{{ $assignmentmapping->periodend ?? '' }}"
+                                            class=" form-control leaveDate" placeholder="Enter Perio End">
                                     </div>
                                 </div>
                                 <div class="col-6">
@@ -91,7 +91,28 @@
 
 @endsection
 
+
 <!--Page Active Scripts(used by this page)-->
 <script src="{{ url('backEnd/dist/js/pages/forms-basic.active.js') }}"></script>
 <!--Page Scripts(used by all page)-->
 <script src="{{ url('backEnd/dist/js/sidebar.js') }}"></script>
+
+{{-- validation for year only one date  --}}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('.leaveDate').on('change', function() {
+            var leaveDate = $('.leaveDate');
+            var leaveDateValue = $('.leaveDate').val();
+            //  console.log(leaveDateValue);
+            var leaveDateGet = new Date(leaveDateValue);
+            var leaveyear = leaveDateGet.getFullYear();
+            // console.log(startyear);
+            var leaveyearLength = leaveyear.toString().length;
+            if (leaveyearLength > 4) {
+                alert('Enter four digits for the year');
+                leaveDate.val('');
+            }
+        });
+    });
+</script>

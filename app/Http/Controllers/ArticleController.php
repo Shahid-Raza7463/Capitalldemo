@@ -72,8 +72,7 @@ class ArticleController extends Controller
              if($request->hasFile('file'))
              {
                 $file=$request->file('file');
-                 $extension=$file->getClientOriginalExtension();
-                 $filename=time().'.'.$extension;
+                  $filename = $file->getClientOriginalName();
                  $file->move('backEnd/image/article/',$filename);
                  $data['file']=$filename;
              }

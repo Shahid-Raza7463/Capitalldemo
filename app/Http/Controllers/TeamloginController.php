@@ -34,9 +34,12 @@ class TeamloginController extends Controller
      */
     public function create()
     {
+		         if(auth()->user()->role_id == 11 or auth()->user()->role_id == 12){
         $teammemberlist = Teammember::where('status','0')->get();
      //   dd($teammemberlist);
         return view('backEnd.teamlogin.create',compact('teammemberlist'));
+					    }
+        abort(403, ' you have no permission to access this page ');
     }
 
     /**

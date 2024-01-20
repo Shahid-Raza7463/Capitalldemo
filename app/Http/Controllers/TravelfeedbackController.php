@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Travelfeedback;
 use Illuminate\Http\Request;
 use DB;
-
 class TravelfeedbackController extends Controller
 {
     /**
@@ -15,51 +14,44 @@ class TravelfeedbackController extends Controller
      */
     public function feedback(Request $request)
     {
-        //  dd($request);
+      //  dd($request);
         if ($request->ajax()) {
             if (isset($request->id)) {
-                // dd($request->id);
+               // dd($request->id);
                 $outstationconveyances = DB::table('travelforms')
-                    ->select('travelforms.id')->where('travelforms.id', $request->id)->first();
+              ->select('travelforms.id')->
+              where('travelforms.id',$request->id)->first();
                 return response()->json($outstationconveyances);
+             }
             }
-        }
-    }
+    
+    } 
     public function index()
     {
-        if (auth()->user()->role_id == 11) {
+        if( auth()->user()->role_id == 11){
             $travelfeedbacks  = DB::table('travelfeedbacks')
-                ->leftjoin('travelforms', 'travelforms.id', 'travelfeedbacks.travelform_id')
-                ->leftjoin('clients', 'clients.id', 'travelforms.client_id')
-                ->leftjoin('assignments', 'assignments.id', 'travelforms.assignment')
-                ->leftjoin('teammembers', 'teammembers.id', 'travelforms.partener')
-                ->leftjoin('teammembers as teams', 'teams.id', 'travelforms.createdby')
-                ->select(
-                    'travelfeedbacks.*',
-                    'teammembers.team_member',
-                    'clients.client_name',
-                    'assignments.assignment_name',
-                    'teams.team_member as createdby'
-                )->get();
+            ->leftjoin('travelforms','travelforms.id','travelfeedbacks.travelform_id')
+            ->leftjoin('clients','clients.id','travelforms.client_id')
+            ->leftjoin('assignments','assignments.id','travelforms.assignment')
+            ->leftjoin('teammembers','teammembers.id','travelforms.partener')
+            ->leftjoin('teammembers as teams','teams.id','travelforms.createdby')
+            ->select('travelfeedbacks.*','teammembers.team_member','clients.client_name','assignments.assignment_name',
+            'teams.team_member as createdby')->get();
             // dd($travelformDatas);
-        } else {
-            $travelfeedbacks  = DB::table('travelfeedbacks')
-                ->leftjoin('travelforms', 'travelforms.id', 'travelfeedbacks.travelform_id')
-                ->leftjoin('clients', 'clients.id', 'travelforms.client_id')
-                ->leftjoin('assignments', 'assignments.id', 'travelforms.assignment')
-                ->leftjoin('teammembers', 'teammembers.id', 'travelforms.partener')
-                ->leftjoin('teammembers as teams', 'teams.id', 'travelforms.createdby')
-                ->where('travelfeedbacks.createdby', auth()->user()->teammember_id)
-                ->select(
-                    'travelfeedbacks.*',
-                    'teammembers.team_member',
-                    'clients.client_name',
-                    'assignments.assignment_name',
-                    'teams.team_member  as createdby'
-                )->get();
-            // dd($travelfeedbacks);
-        }
-        return view('backEnd.travelfeedback.index', compact('travelfeedbacks'));
+            }
+            else{
+                $travelfeedbacks  = DB::table('travelfeedbacks')
+                ->leftjoin('travelforms','travelforms.id','travelfeedbacks.travelform_id')
+                ->leftjoin('clients','clients.id','travelforms.client_id')
+                ->leftjoin('assignments','assignments.id','travelforms.assignment')
+                ->leftjoin('teammembers','teammembers.id','travelforms.partener')
+                ->leftjoin('teammembers as teams','teams.id','travelforms.createdby')
+               ->where('travelfeedbacks.createdby',auth()->user()->teammember_id)
+                   ->select('travelfeedbacks.*','teammembers.team_member','clients.client_name','assignments.assignment_name',
+                   'teams.team_member  as createdby')->get();
+                  // dd($travelfeedbacks);
+            }
+           return view('backEnd.travelfeedback.index',compact('travelfeedbacks'));
     }
 
     /**
@@ -80,25 +72,26 @@ class TravelfeedbackController extends Controller
      */
     public function store(Request $request)
     {
-
-        try {
-            $data = $request->except(['_token']);
-            $data['createdby'] = auth()->user()->teammember_id;
-            $data = Travelfeedback::Create($data);
-            DB::table('travelforms')->where('id', $request->travelform_id)->update([
-                'feedback'         =>     '1',
-            ]);
-
-            $output = array('msg' => 'Submit Successfully');
-            return back()->with('success', $output);
-        } catch (Exception $e) {
-            DB::rollBack();
-            Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
-            report($e);
-            $output = array('msg' => $e->getMessage());
-            return back()->withErrors($output)->withInput();
-        }
-    }
+   
+             try  {
+                 $data=$request->except(['_token']);
+                 $data['createdby'] = auth()->user()->teammember_id;
+                 $data = Travelfeedback::Create($data);
+                 DB::table('travelforms')->where('id',$request->travelform_id)->update([	
+                     'feedback'         =>     '1', 
+                      ]);
+              
+                 $output = array('msg' => 'Submit Successfully');
+                 return back()->with('success', $output);
+             } catch (Exception $e) {
+                 DB::rollBack();
+                 Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
+                 report($e);
+                 $output = array('msg' => $e->getMessage());
+                 return back()->withErrors($output)->withInput();
+             }
+         
+     }
 
     /**
      * Display the specified resource.

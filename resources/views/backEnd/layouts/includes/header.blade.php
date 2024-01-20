@@ -39,116 +39,9 @@
                 </div>
             </li> --}}
             <!--/.dropdown-->
-
-            {{-- ! old code  --}}
-            {{-- @php
+    @php
                 if (auth()->user()->role_id == 11 || auth()->user()->role_id == 18) {
-                    $clientnotification = DB::table('notifications')
-                        ->latest()
-                        ->paginate(10);
-                    // dd($clientnotification);
-                } elseif (auth()->user()->role_id == 13) {
-                    $clientnotification = DB::table('notifications')
-                        ->leftjoin('teammembers', 'teammembers.id', 'notifications.created_by')
-                        ->leftjoin('notificationtargets', 'notificationtargets.notification_id', 'notifications.id')
-                        ->Where('targettype', '3')
-                        ->orWhere('targettype', '2')
-                        ->orwhere('notificationtargets.teammember_id', auth()->user()->teammember_id)
-                        ->select('notifications.*')
-                        ->latest()
-                        ->get();
-                } elseif (auth()->user()->role_id == 14) {
-                    //	dd(auth()->user()->role_id);
-                    $clientnotification = DB::table('notifications')
-                        ->leftjoin('teammembers', 'teammembers.id', 'notifications.created_by')
-                        ->leftjoin('notificationtargets', 'notificationtargets.notification_id', 'notifications.id')
-                        ->Where('targettype', '4')
-                        ->orWhere('targettype', '2')
-                        ->orwhere('notificationtargets.teammember_id', auth()->user()->teammember_id)
-                        ->select('notifications.*')
-                        ->latest()
-                        ->get();
-                    //dd(auth()->user()->role_id);
-                } elseif (auth()->user()->role_id == 15) {
-                    $clientnotification = DB::table('notifications')
-                        ->leftjoin('teammembers', 'teammembers.id', 'notifications.created_by')
-                        ->leftjoin('notificationtargets', 'notificationtargets.notification_id', 'notifications.id')
-                        ->Where('targettype', '5')
-                        ->orWhere('targettype', '2')
-                        ->orwhere('notificationtargets.teammember_id', auth()->user()->teammember_id)
-                        ->select('notifications.*')
-                        ->latest()
-                        ->get();
-                } elseif (auth()->user()->role_id == 16) {
-                    $clientnotification = DB::table('notifications')
-                        ->leftjoin('teammembers', 'teammembers.id', 'notifications.created_by')
-                        ->leftjoin('notificationtargets', 'notificationtargets.notification_id', 'notifications.id')
-                        ->Where('targettype', '6')
-                        ->orWhere('targettype', '2')
-                        ->orwhere('notificationtargets.teammember_id', auth()->user()->teammember_id)
-                        ->select('notifications.*')
-                        ->latest()
-                        ->get();
-                } elseif (auth()->user()->role_id == 17) {
-                    $clientnotification = DB::table('notifications')
-                        ->leftjoin('teammembers', 'teammembers.id', 'notifications.created_by')
-                        ->leftjoin('notificationtargets', 'notificationtargets.notification_id', 'notifications.id')
-                        ->Where('targettype', '7')
-                        ->orWhere('targettype', '2')
-                        ->orwhere('notificationtargets.teammember_id', auth()->user()->teammember_id)
-                        ->select('notifications.*')
-                        ->latest()
-                        ->get();
-                } else {
-                    //  $notificationDatas = Notification::Where('targettype','1')->orWhere('targettype','2')->get();
-                    $clientnotification = DB::table('notifications')
-                        ->leftjoin('teammembers', 'teammembers.id', 'notifications.created_by')
-                        ->leftjoin('notificationtargets', 'notificationtargets.notification_id', 'notifications.id')
-                        ->where('notifications.targettype', '2')
-                        ->orwhere('notificationtargets.teammember_id', auth()->user()->teammember_id)
-                        ->select('notifications.*', 'teammembers.team_member', 'teammembers.profilepic')
-                        ->latest()
-                        ->get();
-                }
-                $getuser = App\Models\User::where('role_id', Auth::user()->role_id ?? '')
-                    ->with('teammember')
-                    ->first();
-
-            @endphp
-
-            @if (count($clientnotification) > 0)
-                <li class="nav-item dropdown notification">
-                    <a class="nav-link dropdown-toggle badge-dot" href="#" data-toggle="dropdown">
-                        <i class="typcn typcn-bell"></i>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-right">
-                        <h6 class="notification-title">Notifications</h6>
-                        <p class="notification-text">You have {{ count($clientnotification) }} unread notification</p>
-                        <div class="notification-list">
-                            @foreach ($clientnotification as $clientnotificationdata)
-                                <div class="media new">
-                                    <a href="{{ url('notification/' . $clientnotificationdata->id) }}">
-                                        <div class="media-body">
-                                            <h6>{{ $clientnotificationdata->title }}</h6>
-                                            <span>{{ date('F d', strtotime($clientnotificationdata->created_at)) }}
-                                                {{ date('h:ia', strtotime($clientnotificationdata->created_at)) }}</span>
-                                        </div>
-                                    </a>
-                                </div>
-                                <!--/.media -->
-                            @endforeach
-                        </div>
-                        <!--/.notification -->
-                        <div class="dropdown-footer"><a href="{{ url('notification') }}">View All Notification</a></div>
-                    </div>
-                    <!--/.dropdown-menu -->
-                </li>
-                <!--/.dropdown-->
-            @endif --}}
-
-            {{-- ! notification read or unread functionality --}}
-            @php
-                if (auth()->user()->role_id == 11 || auth()->user()->role_id == 18) {
+    
                     $userId = auth()->user()->teammember_id;
                     $clientnotification = DB::table('notifications')
                         ->leftjoin('notificationreadorunread', function ($join) use ($userId) {
@@ -157,7 +50,7 @@
 
                         ->select('notifications.*', 'notificationreadorunread.status as readstatus')
                         ->latest()
-                        ->paginate(10);
+                        ->paginate(5);
                 } elseif (auth()->user()->role_id == 13) {
                     $userId = auth()->user()->teammember_id;
 
@@ -175,8 +68,9 @@
                         })
                         ->select('notifications.*', 'notificationreadorunread.status as readstatus')
                         ->latest()
-                        ->get();
+                        ->paginate(5);
                 } elseif (auth()->user()->role_id == 14) {
+                
                     $userId = auth()->user()->teammember_id;
 
                     $clientnotification = DB::table('notifications')
@@ -194,8 +88,8 @@
                                 });
                         })
                         ->select('notifications.*', 'notificationreadorunread.status as readstatus')
-                        ->latest()
-                        ->get();
+                         ->latest()
+                        ->paginate(5);
                 } elseif (auth()->user()->role_id == 15) {
                     $userId = auth()->user()->teammember_id;
 
@@ -214,9 +108,10 @@
                                 });
                         })
                         ->select('notifications.*', 'notificationreadorunread.status as readstatus')
-                        ->latest()
-                        ->get();
+                         ->latest()
+                        ->paginate(5);
                 } elseif (auth()->user()->role_id == 16) {
+
                     $userId = auth()->user()->teammember_id;
 
                     $clientnotification = DB::table('notifications')
@@ -235,7 +130,7 @@
                         })
                         ->select('notifications.*', 'notificationreadorunread.status as readstatus')
                         ->latest()
-                        ->get();
+                        ->paginate(5);
                 } elseif (auth()->user()->role_id == 17) {
                     $userId = auth()->user()->teammember_id;
 
@@ -254,8 +149,8 @@
                                 });
                         })
                         ->select('notifications.*', 'notificationreadorunread.status as readstatus')
-                        ->latest()
-                        ->get();
+                         ->latest()
+                        ->paginate(5);
                 } else {
                     $userId = auth()->user()->teammember_id;
 
@@ -269,8 +164,8 @@
                             $query->where('notifications.targettype', '2')->orWhere('notificationtargets.teammember_id', $userId);
                         })
                         ->select('notifications.*', 'teammembers.team_member', 'teammembers.profilepic', 'notificationreadorunread.status as readstatus')
-                        ->latest()
-                        ->get();
+                         ->latest()
+                        ->paginate(5);
                 }
                 $getuser = App\Models\User::where('role_id', Auth::user()->role_id ?? '')
                     ->with('teammember')
@@ -278,7 +173,8 @@
 
             @endphp
 
-            @if (count($clientnotification) > 0)
+  
+ @if (count($clientnotification) > 0)
                 @php
                     $unreadNotificationCount = 0;
                     foreach ($clientnotification as $clientnotificationdata) {
@@ -319,39 +215,30 @@
                 <!--/.dropdown-->
             @endif
 
-
-
-
-
-
-
-
-
-
-            <!-- <li class="nav-item dropdown user-menu">
-   
-                <a class="nav-link dropdown-toggle" style="width: auto" href="{{ url('check-In/create') }}" >
+			<!-- <li class="nav-item dropdown user-menu">
+			
+                <a class="nav-link dropdown-toggle" style="width: auto" href="{{url('check-In/create')}}" >
                     <!--<img src="assets/dist/img/user2-160x160.png')}}" alt="">--
                    <span style="font-weight: 500;"><i style="color:green;" class="far fa-clock mr-1"></i>&nbsp;Check-In </span>
                 </a>
-   </li>-->
+			</li>-->
             <li class="nav-item dropdown user-menu">
-
+			
                 <a class="nav-link dropdown-toggle" style="width: auto" href="#" data-toggle="dropdown">
                     <!--<img src="assets/dist/img/user2-160x160.png')}}" alt="">-->
-                    <span style="font-weight: 500;">Sign Out</span>
+                   <span style="font-weight: 500;">Sign Out</span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-left">
                     <div class="dropdown-header d-sm-none">
                         <a href="" class="header-arrow"><i class="icon ion-md-arrow-back"></i></a>
                     </div>
-
-                    <a href="{{ url('resetpasswords/' . Auth::user()->teammember_id) }}" class="dropdown-item"><i
-                            class="typcn typcn-cog-outline"></i> Password Settings</a>
-                    <a href="{{ route('logout') }}"
-                        onclick="event.preventDefault();
-document.getElementById('logout-form').submit();"
-                        class="dropdown-item"><i class="typcn typcn-key-outline"></i> Sign
+             
+					 <a
+					  href="{{url('resetpasswords/'.Auth::user()->teammember_id)}}" class="dropdown-item" 
+				
+						><i class="typcn typcn-cog-outline"></i> Password Settings</a>
+                   <a href="{{ route('logout') }}" onclick="event.preventDefault();
+document.getElementById('logout-form').submit();" class="dropdown-item"><i class="typcn typcn-key-outline"></i> Sign
                         Out</a>
                     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                         @csrf

@@ -193,10 +193,9 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="fs-17 font-weight-600 mb-0">Edit Profile</h6>
+
                                 </div>
-
                                 <h6 id="profileCompletion"></h6>
-
                                 @if ($teamprofile != null)
                                     <div>
                                         <a class="btn btn-success"
@@ -204,7 +203,9 @@
                                             edit resume</a>
                                     </div>
                                 @endif
-
+                                <!--<div>
+                                                    <a class="btn btn-success" href="{{ url('profileimage/' . Auth::user()->teammember_id) }}">Generate Id</a>
+                                                    </div> -->
                             </div>
                         </div>
                         <form method="post" action="{{ url('userprofile/update') }}" enctype="multipart/form-data">
@@ -285,7 +286,20 @@
                                                 placeholder="Enter Date Of Birth">
                                         </div>
                                     </div>
-
+                                    <!--   <div class="col-md-4 pl-md-1">
+                                                            <div class="form-group">
+                                                                <label class="font-weight-600">Qualification</label>
+                                                                <input type="text" name="qualification" class="form-control" placeholder="Enter Qualification" value="{{ $userInfo->qualification ?? '' }}">
+                                                            </div>
+                                                        </div> -->
+                                    <!-- <div class="col-md-4 pr-md-1">
+                                                            <div class="form-group">
+                                                                <label class="font-weight-600">Address Proof</label>
+                                                                <input type="text" name="address_proof" class="form-control" placeholder="Enter Address Proof"
+                                                                    value="{{ $userInfo->address_proof ?? '' }}">
+                                                            </div>
+                                                            
+                                                        </div> -->
                                     <div class="col-md-2 pl-md-1">
                                         <div class="form-group">
                                             <label class="font-weight-600">Aadhaar No</label>
@@ -358,8 +372,48 @@
                                         </div>
                                     @endif
                                 </div>
-
-
+                                <!--
+                         @if ($userInfo->nda === null)
+    <div class="row">
+                                                        <div class="col-6 pl-md-1">
+                                                            <div class="form-group">
+                                                                <label class="font-weight-600">NDA (Non-Disclosure Agreement) *</label>
+                                                                <input type="file" name="nda" required class="form-control"
+                                                                    value="" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6 pl-md-1">
+                                                            <div class="form-group">
+                                                                <label class="font-weight-600">NDA</label><br>
+                                                               @if (
+                                                                   $userInfo->role['rolename'] === 'Staff' ||
+                                                                       ($userInfo->entity === 'K G Somani & Co LLP' && $userInfo->role['rolename'] === 'Intern'))
+    <a download href="{{ url('backEnd/NDA-Trainee.pdf') }}" class="btn btn-success btn">
+                                                                        <i class="fa fa-file-pdf-o"></i> Download
+                                                                    </a>
+@elseif($userInfo->entity == 'Capitall India Pvt. Ltd.')
+    <a download href="{{ url('backEnd/NDA-Capitall.pdf') }}" class="btn btn-success btn">
+                                                                    <i class="fa fa-file-pdf-o"></i> Download
+                                                                </a>
+@elseif($userInfo->entity == 'Womennovator')
+    <a download href="{{ url('backEnd/NDA-Womennovator.pdf') }}" class="btn btn-success btn">
+                                                                        <i class="fa fa-file-pdf-o"></i> Download
+                                                                    </a>
+@elseif($userInfo->entity == 'KGS Advisors LLP')
+    <a download href="{{ url('backEnd/NDA-KgsAdvisors.pdf') }}" class="btn btn-success btn">
+                                                                        <i class="fa fa-file-pdf-o"></i> Download
+                                                                    </a>
+@else
+    <a download href="{{ url('backEnd/NDA-kgs.pdf') }}" class="btn btn-success btn">
+                                                                    <i class="fa fa-file-pdf-o"></i> Download
+                                                                </a>
+    @endif
+                                                            </div>
+                                                            
+                                                        </div>
+                                                    </div>
+    @endif
+                              -->
                                 <div class="row row-sm">
                                     <div class="col-3">
                                         <div class="form-group">
@@ -403,15 +457,15 @@
                                                 placeholder="Enter joining_date">
                                         </div>
                                     </div>
-                                    <div class="col-4">
+                                   <!-- <div class="col-4">
                                         <div class="form-group">
                                             <label class="font-weight-600">Leaving Date</label>
                                             <input type="date" id="example-date-input" name="leavingdate"
                                                 value="{{ $userInfo->leavingdate ?? '' }}" class="form-control"
                                                 placeholder="Enter Leaving Date">
                                         </div>
-                                    </div>
-                                    <div class="col-md-2  pl-md-1">
+                                    </div> -->
+                                    <div class="col-md-4  pl-md-1">
                                         <div class="form-group">
                                             <label class="font-weight-600">Address Upload</label>
                                             <input type="file" name="addressupload" class="form-control"
@@ -464,12 +518,18 @@
                                             </div>
                                         </div>
                                         <div class="col-1">
-
+                                            <div class="form-group" style="margin-top: 36px;">
+                                             <!--   <a href="javascript:void(0);" id="add_button" title="Add field"><img
+                                                        src="{{ url('backEnd/image/add-icon.png') }}" /></a> -->
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
+                            <div class="card-footer">
+                              <!--  <button type="submit" style="float:right;"
+                                    class="btn btn-fill btn-primary">Save</button> -->
+                            </div>
                             <br>
                         </form>
                     </div>
@@ -505,7 +565,11 @@
                                                         href="{{ url('backEnd/image/teammember/document_file/' . $teamqualificationData->document_file ?? '') }}">
                                                         {{ $teamqualificationData->document_file ?? '' }}</a>
                                                 </td>
-
+                                                <!-- <td>
+                                                        <a href="{{ url('qualification/delete/' . $teamqualificationData->id) }}"
+                                                        onclick="return confirm('Are you sure you want to delete this item?');"
+                                                        class="btn btn-danger-soft btn-sm"><i class="far fa-trash-alt"></i></a>
+                                                    </td> -->
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -531,7 +595,9 @@
                                             edit resume</a>
                                     </div>
                                 @endif
-
+                                <!--<div>
+                                                    <a class="btn btn-success" href="{{ url('profileimage/' . Auth::user()->teammember_id) }}">Generate Id</a>
+                                                    </div> -->
                             </div>
                         </div>
                         <form method="post" action="{{ url('userprofile/update') }}" enctype="multipart/form-data">
@@ -607,12 +673,20 @@
 
 
                                 </div>
-
+                                @if ($userInfo->verify != 1)
+                                <!--    <div class="card-footer">
+                                        <button type="submit" style="float:right;"
+                                            class="btn btn-fill btn-primary">Please Verify</button>
+                                    </div> -->
+                                @else
+                                 <!--   <div class="card-footer">
+                                        <button style="float:right;" class="btn btn-fill btn-primary">Verified</button>
+                                    </div> -->
+                                @endif
                                 <br>
                         </form>
                     </div>
                 </div>
-
                 @php
                     $totalFields = 23;
                     $filledFields = 0;
@@ -647,7 +721,6 @@
                     $profileCompletionPercentage = ($filledFields / $totalFields) * 100;
                     $formattedProfileCompletion = number_format($profileCompletionPercentage, 2);
                 @endphp
-
                 <script>
                     $(document).ready(function() {
                         var profileCompletionPercentage = {{ $formattedProfileCompletion }};
@@ -660,6 +733,7 @@
                         }
                     });
                 </script>
+
             </div>
         </div>
         <!--/.body content-->
@@ -691,6 +765,12 @@
             $('#row_id_' + row_id).remove();
             count--;
         });
+
+
+
+
+
+
 
     });
 </script>

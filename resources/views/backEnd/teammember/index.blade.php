@@ -16,7 +16,7 @@
                                 @elseif (Request::query('status') == '0')
                                     Inactive
                                 @else
-                                    Please Select One
+                                    All
                                 @endif
                             </button>
                             <div class="dropdown-menu">
@@ -24,7 +24,7 @@
                                     href="{{ url('/teamstatus?' . 'status=' . '1') }}">Active</a>
                                 <a style="color: #37A000" class="dropdown-item"
                                     href="{{ url('/teamstatus?' . 'status=' . '0') }}">Inactive</a>
-
+                                <a style="color: #37A000" class="dropdown-item" href="{{ url('/teammember') }}">All</a>
                             </div>
                         </div>
                     </li>
@@ -58,6 +58,7 @@
                             <tr>
                                 <th style="display: none;">id</th>
                                 <th>Profile Completed</th>
+                                <th>TItle</th>
                                 <th>Team Member Name</th>
                                 <th>Team Profile Image</th>
                                 <th>Staff Code</th>
@@ -79,8 +80,10 @@
                                     <th>User Status</th>
                                 @endif
                                 <th>Status</th>
+                            
                                 <th>Communication Address</th>
                                 <th>Permanent Address</th>
+                                <th>Address Upload</th>
                                 <th>Adharcard Number</th>
                                 <th>Adharcard Document</th>
                                 <th>Pancard No</th>
@@ -99,49 +102,10 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {{-- @php
-                                dd($teammemberDatas);
-                            @endphp --}}
                             @foreach ($teammemberDatas as $teammemberData)
                                 <tr>
                                     <td style="display: none;">{{ $teammemberData->id }}</td>
                                     <td class="text-center">
-                                        {{-- @php
-                                            $totalFields = 24; // 30 column// 26
-                                            $filledFields = 0;
-
-                                            // total 24 column
-                                            $filledFields += !empty($teammemberData->id) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->team_member) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->profilepic) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->staffcode) ? 1 : 0;
-                                            // $filledFields += !empty($teammemberData->role->rolename) ? 1 : 0;
-                                            // $filledFields += !empty($teammemberData->designation) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->mobile_no) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->dateofbirth) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->joining_date) ? 1 : 0;
-                                            // $filledFields += !empty($teammemberData->department) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->emailid) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->personalemail) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->communicationaddress) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->permanentaddress) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->adharcardnumber) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->aadharupload) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->pancardno) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->panupload) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->emergencycontactnumber) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->nameofbank) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->bankaccountnumber) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->ifsccode) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->mothername) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->mothernumber) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->cancelcheque) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->fathername) ? 1 : 0;
-                                            $filledFields += !empty($teammemberData->fathernumber) ? 1 : 0;
-
-                                            $profileCompletionPercentage = ($filledFields / $totalFields) * 100;
-                                            $formattedProfileCompletion = number_format($profileCompletionPercentage, 2);
-                                        @endphp --}}
                                         @php
                                             $totalFields = 23;
                                             $filledFields = 0;
@@ -179,20 +143,22 @@
                                         @if ($formattedProfileCompletion == 100)
                                             <span class="badge badge-pill badge-success"
                                                 style="width: 55px;
-                                         height: 20px;
-                                         font-size: 12px;">{{ $formattedProfileCompletion }}%</span>
+                                                height: 20px;
+                                                font-size: 12px;">{{ $formattedProfileCompletion }}%</span>
                                         @else
                                             <span class="badge badge-pill badge-danger"
                                                 style=" width: 55px;
-                                         height: 20px;
-                                         font-size: 12px;">{{ $formattedProfileCompletion }}%</span>
+                                                height: 20px;
+                                                font-size: 12px;">{{ $formattedProfileCompletion }}%</span>
                                         @endif
+                                    </td>
+                                    <td>{{ App\Models\Title::select('title')->where('id', $teammemberData->title_id)->first()->title ?? '' }}
                                     </td>
                                     <td>
                                         @if (Auth::user()->role_id == 18 || Auth::user()->role_id == 11)
                                             <a href="{{ route('teammember.edit', $teammemberData->id) }}">
                                         @endif
-                                        {{ $teammemberData->title }} {{ $teammemberData->team_member }}
+                                        {{ $teammemberData->team_member }}
                                         @if (Auth::user()->role_id == 18 || Auth::user()->role_id == 11)
                                             </a>
                                         @endif
@@ -206,7 +172,6 @@
                                                     class="avatar-img rounded-circle" alt="...">
                                         @endif
                                     </td>
-
                                     <td> {{ $teammemberData->staffcode ?? '' }} </td>
                                     <td>{{ $teammemberData->role->rolename ?? '' }}</td>
                                     <td>{{ $teammemberData->designation ?? '' }}</td>
@@ -250,12 +215,34 @@
                                             @endif
                                         </td>
                                     @endif
-                                    <td> <input data-id="{{ $teammemberData->id }}" class="toggle-class" type="checkbox"
-                                            data-onstyle="success" data-offstyle="danger" data-toggle="toggle"
-                                            data-on="Active" data-off="InActive"
-                                            {{ $teammemberData->status ? 'checked' : '' }}></td>
+                                  
+                                     <td> 
+                                
+
+                                     @if ($teammemberData->status == 0)
+                                     <a href="{{ url('/changeteamStatus/' . $teammemberData->status . '/1/' . $teammemberData->id) }}"
+                                         onclick="return confirm('Are you sure you want to Active this teammember?');">
+                                         <button class="btn btn-danger" data-toggle="modal"
+                                             style="height: 16px; width: auto; border-radius: 7px; display: flex; align-items: center; justify-content: center;font-size: 11px;"
+                                             data-target="#requestModal">Inactive</button>
+                                     </a>
+                                 @else
+                                     <a href="{{ url('/changeteamStatus/' . $teammemberData->status . '/0/' . $teammemberData->id) }}"
+                                         onclick="return confirm('Are you sure you want to Inactive this teammember?');">
+                                         <button class="btn btn-primary" data-toggle="modal"
+                                             style="height: 16px; width: auto; border-radius: 7px; display: flex; align-items: center; justify-content: center;font-size: 11px;"
+                                             data-target="#requestModal">Active</button>
+                                     </a>
+                                 @endif
+                             </td>
                                     <td>{{ $teammemberData->communicationaddress ?? '' }}</td>
                                     <td>{{ $teammemberData->permanentaddress ?? '' }}</td>
+                                    <td>
+                                        @if ($teammemberData->addressupload != null)
+                                            <a
+                                                href="{{ $teammemberData->addressupload }}">{{ $teammemberData->addressupload ?? '' }}</a>
+                                        @endif
+                                    </td>
                                     <td>{{ $teammemberData->adharcardnumber ?? '' }}</td>
                                     <td>
                                         @if ($teammemberData->aadharupload != null)
@@ -283,11 +270,11 @@
                                     <td>{{ $teammemberData->fathernumber ?? '' }}</td>
 
                                     <!--   <td> <form action="{{ route('teammember.destroy', $teammemberData->id) }}" method="POST">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <input type="hidden" name="_method" value="DELETE">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <a  onclick="return confirm('Are you sure you want to deactivate this item?');" class="btn btn-danger-soft btn-sm"><i
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                class="fa fa-user-times"></i></a>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </form></td>-->
+                                                                                                                <input type="hidden" name="_method" value="DELETE">
+                                                                                                                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                                                                                                  <a  onclick="return confirm('Are you sure you want to deactivate this item?');" class="btn btn-danger-soft btn-sm"><i
+                                                                                                                class="fa fa-user-times"></i></a>
+                                                                                                            </form></td>-->
                                 </tr>
                             @endforeach
                         </tbody>
@@ -332,16 +319,22 @@
 <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.print.min.js"></script>
 <script>
     $(document).ready(function() {
+        var status = @json(Request::query('status'));
+
+        var filename = 'All Team Member List';
+        if (status == '1') {
+            filename = 'Active Team Members';
+        } else if (status == '0') {
+            filename = 'Inactive Team Members';
+        }
+
         $('#examplee').DataTable({
             "pageLength": 130,
             dom: 'Bfrtip',
             "order": [
                 [0, "desc"]
             ],
-
-            buttons: [
-
-                {
+            buttons: [{
                     extend: 'copyHtml5',
                     exportOptions: {
                         columns: [0, ':visible']
@@ -349,6 +342,7 @@
                 },
                 {
                     extend: 'excelHtml5',
+                    filename: filename,
                     exportOptions: {
                         columns: ':visible'
                     }

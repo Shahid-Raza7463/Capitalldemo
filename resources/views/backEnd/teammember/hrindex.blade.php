@@ -288,7 +288,7 @@
 									<th>Category</th>
 									<th>Cost Hourly</th>
 									@endif
-                            		<th>Joining Datebbb</th>									
+                            		<th>Joining Date</th>									
 									<th>Leaving Date</th>									
                                     <th>Department</th>
                                     <th>Email</th>

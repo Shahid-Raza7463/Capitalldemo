@@ -102,12 +102,16 @@
                               <tr>
                                   <th>Team Name</th>
                                   <th>Period Date ( Monday To Saturday )</th>
+                                  <th>Submitted Date</th>
                                   <th>Total Timesheet Filled Day</th>
                                   <th>Total Hour</th>
                                   {{-- <th>Partner</th> --}}
                               </tr>
                           </thead>
                           <tbody>
+                              {{-- @php
+                                  dd($get_date);
+                              @endphp --}}
                               @foreach ($get_date as $jobDatas)
                                   <tr>
                                       <td><a
@@ -130,6 +134,8 @@
                                               ) }}">{{ $jobDatas->team_member }}</a>
                                       </td>
                                       <td>{{ $jobDatas->week }}</td>
+                                      <td>{{ date('d-m-Y', strtotime($jobDatas->created_at)) }}
+                                          {{ date('h:i A', strtotime($jobDatas->created_at)) }}</td>
                                       <td>{{ $jobDatas->totaldays }}</td>
                                       <td>{{ $jobDatas->totaltime }}</td>
                                       {{-- <td>{{ $jobDatas->partnername }}</td> --}}
@@ -147,6 +153,7 @@
 
   {{-- filter on timesheet submitted --}}
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
 
   {{-- ! runnig code --}}
 
@@ -187,12 +194,20 @@
                                   '&startdate=' + item.startdate +
                                   '&enddate=' + item.enddate;
 
+                              // Format created_at date
+                              var formattedDate = moment(item.created_at).format(
+                                  'DD-MM-YYYY');
+                              var formattedTime = moment(item.created_at).format(
+                                  'hh:mm A');
+
                               // Add the rows to the table
                               $('table tbody').append('<tr>' +
                                   '<td><a href="' + url + '">' + item
                                   .team_member +
                                   '</a></td>' +
                                   '<td>' + item.week + '</td>' +
+                                  '<td>' + formattedDate + ' ' + formattedTime +
+                                  '</td>' +
                                   '<td>' + item.totaldays + '</td>' +
                                   '<td>' + item.totaltime + '</td>' +
                                   //   '<td>' + item.partnername + '</td>' +
@@ -243,12 +258,20 @@
                                   '&startdate=' + item.startdate +
                                   '&enddate=' + item.enddate;
 
+                              // Format created_at date
+                              var formattedDate = moment(item.created_at).format(
+                                  'DD-MM-YYYY');
+                              var formattedTime = moment(item.created_at).format(
+                                  'hh:mm A');
+
                               // Add the rows to the table
                               $('table tbody').append('<tr>' +
                                   '<td><a href="' + url + '">' + item
                                   .team_member +
                                   '</a></td>' +
                                   '<td>' + item.week + '</td>' +
+                                  '<td>' + formattedDate + ' ' + formattedTime +
+                                  '</td>' +
                                   '<td>' + item.totaldays + '</td>' +
                                   '<td>' + item.totaltime + '</td>' +
                                   //   '<td>' + item.partnername + '</td>' +
@@ -299,12 +322,20 @@
                                   '&startdate=' + item.startdate +
                                   '&enddate=' + item.enddate;
 
+                              // Format created_at date
+                              var formattedDate = moment(item.created_at).format(
+                                  'DD-MM-YYYY');
+                              var formattedTime = moment(item.created_at).format(
+                                  'hh:mm A');
+
                               // Add the rows to the table
                               $('table tbody').append('<tr>' +
                                   '<td><a href="' + url + '">' + item
                                   .team_member +
                                   '</a></td>' +
                                   '<td>' + item.week + '</td>' +
+                                  '<td>' + formattedDate + ' ' + formattedTime +
+                                  '</td>' +
                                   '<td>' + item.totaldays + '</td>' +
                                   '<td>' + item.totaltime + '</td>' +
                                   //   '<td>' + item.partnername + '</td>' +
@@ -349,12 +380,20 @@
                                   '&startdate=' + item.startdate +
                                   '&enddate=' + item.enddate;
 
+                              // Format created_at date
+                              var formattedDate = moment(item.created_at).format(
+                                  'DD-MM-YYYY');
+                              var formattedTime = moment(item.created_at).format(
+                                  'hh:mm A');
+
                               // Add the rows to the table
                               $('table tbody').append('<tr>' +
                                   '<td><a href="' + url + '">' + item
                                   .team_member +
                                   '</a></td>' +
                                   '<td>' + item.week + '</td>' +
+                                  '<td>' + formattedDate + ' ' + formattedTime +
+                                  '</td>' +
                                   '<td>' + item.totaldays + '</td>' +
                                   '<td>' + item.totaltime + '</td>' +
                                   //   '<td>' + item.partnername + '</td>' +
@@ -401,12 +440,20 @@
                                   '&startdate=' + item.startdate +
                                   '&enddate=' + item.enddate;
 
+                              // Format created_at date
+                              var formattedDate = moment(item.created_at).format(
+                                  'DD-MM-YYYY');
+                              var formattedTime = moment(item.created_at).format(
+                                  'hh:mm A');
+
                               // Add the rows to the table
                               $('table tbody').append('<tr>' +
                                   '<td><a href="' + url + '">' + item
                                   .team_member +
                                   '</a></td>' +
                                   '<td>' + item.week + '</td>' +
+                                  '<td>' + formattedDate + ' ' + formattedTime +
+                                  '</td>' +
                                   '<td>' + item.totaldays + '</td>' +
                                   '<td>' + item.totaltime + '</td>' +
                                   //   '<td>' + item.partnername + '</td>' +

@@ -1,9 +1,8 @@
 @extends('backEnd.layouts.layout') @section('backEnd_content')
-    <!-- Add this just before btn-infthe closing </body> tag of your HTML document -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
     <!--Content Header (Page header)-->
     <div class="content-header row align-items-center m-0">
-        <nav aria-label="breadcrumb" class="col-sm-6 order-sm-last mb-3 mb-sm-0 p-0 ">
+        <nav aria-label="breadcrumb" class="col-sm-4 order-sm-last mb-3 mb-sm-0 p-0 ">
 
             <ol class="breadcrumb d-inline-flex font-weight-600 fs-13 bg-white mb-0 float-sm-right">
 
@@ -16,7 +15,6 @@
                             class="btn btn-secondary">Download File</a>
                     </li>
                 @endif
-
                 @if ($assignmentbudgeting->status == 1)
                     <li style="margin-left: 13px;"><a class="btn btn-primary" style="color:white;" data-toggle="modal"
                             data-target=".bd-example-modal-lg">Tag File</a></li>
@@ -27,7 +25,7 @@
         </nav>
 
 
-        <div class="col-sm-6 header-title p-0">
+        <div class="col-sm-8 header-title p-0">
             <div class="media">
                 <div class="header-icon text-success mr-3"><i class="typcn typcn-group-outline d-block mr-2"></i></div>
                 <div class="media-body">
@@ -38,8 +36,6 @@
         </div>
     </div>
     <!--/.Content Header (Page header)-->
-
-
     <div class="body-content">
         <div class="card mb-4">
             <div class="card-header" style="background:#37a000;">
@@ -88,8 +84,7 @@
                         </ul>
                     </div>
                 </div>
-
-                {{-- <div class="table-responsive">
+                <div class="table-responsive">
                     <table class="table display table-bordered table-striped table-hover basic">
                         <thead>
                             <tr>
@@ -97,82 +92,32 @@
                                 <th>File</th>
                                 <th>Created By</th>
                                 <th>Date</th>
-                                @if ($assignmentbudgeting->status == 1)
-                                    <th>Action</th>
-                                @endif
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($assignmentfolderfile as $assignmentfolderData)
-                                <tr>
-                           
-                                    <td>{{ $assignmentfolderData->particular }}</td>
-                                    <td>
-                                        <a target="blank"
-                                            href="{{ Storage::disk('s3')->temporaryUrl($foldername->assignmentgenerateid . '/' . $assignmentfolderData->filesname, now()->addMinutes(8)) }}">
-                                            {{ $assignmentfolderData->filesname ?? '' }}</a>
-                                        </td>
-                        resources\views\backEnd\assignmentfolderfile            <td>{{ $assignmentfolderData->team_member }} ( {{ $assignmentfolderData->staffcode }}
-                                        )</td>
-                                    <td>{{ date('F d,Y', strtotime($assignmentfolderData->created_at)) }}
-                                        {{ date('h:i A', strtotime($assignmentfolderData->created_at)) }} </td>
+                                @if (Auth::user()->role_id == 13 || Auth::user()->role_id == 14)
                                     @if ($assignmentbudgeting->status == 1)
-                                        <td> <a href="{{ url('/bulkfile/delete/' . $assignmentfolderData->id) }}"
-                                                onclick="return confirm('Are you sure you want to delete this item?');"
-                                                class="btn btn-danger-soft btn-sm"><i class="far fa-trash-alt"></i></a></td>
+                                        <th>Action</th>
                                     @endif
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div> --}}
-                <div class="table-responsive">
-                    <table id="examplee" class="table display table-bordered table-striped table-hover basic">
-                        {{-- <div>
-                            <a href="{{ route('hi') }}" class="btn btn-primary">Download Zip</a>
-                        </div> --}}
-                        {{-- <span>
-                            @if (isset($assignmentfolderfile[0]->assignmentfolder_id))
-                                <a href="{{ route('zip', ['assignmentfolder_id' => $assignmentfolderfile[0]->assignmentfolder_id]) }}"
-                                    class="btn btn-secondary">Download Zip</a>
-                            @endif
-                        </span> --}}
-                        <thead>
-                            <tr>
-                                <th>Particular</th>
-                                <th>File</th>
-                                <th>Created By</th>
-                                <th>Date</th>
-                                @if ($assignmentbudgeting->status == 1)
-                                    <th>Action</th>
                                 @endif
                             </tr>
                         </thead>
                         <tbody>
-                            {{-- @php
-                                dd($assignmentfolderfile[0]->assignmentfolder_id);
-                            @endphp --}}
                             @foreach ($assignmentfolderfile as $assignmentfolderData)
                                 <tr>
-                                    {{-- @php
-                                        dd($assignmentfolderData->assignmentfolder_id);
-                                    @endphp --}}
 
                                     <td>{{ $assignmentfolderData->particular }}</td>
-                                    <td>
-                                        <a target="_blank"
-                                            href="{{ asset('storage/image/task/' . $assignmentfolderData->filesname) }}">
-                                            {{ $assignmentfolderData->filesname ?? '' }}
-                                        </a>
-                                    </td>
+                                    <td><a target="blank"
+                                            href="{{ Storage::disk('s3')->temporaryUrl($foldername->assignmentgenerateid . '/' . $assignmentfolderData->filesname, now()->addMinutes(8)) }}">
+                                            {{ $assignmentfolderData->filesname ?? '' }}</a></td>
                                     <td>{{ $assignmentfolderData->team_member }} ( {{ $assignmentfolderData->staffcode }}
                                         )</td>
                                     <td>{{ date('F d,Y', strtotime($assignmentfolderData->created_at)) }}
                                         {{ date('h:i A', strtotime($assignmentfolderData->created_at)) }} </td>
-                                    @if ($assignmentbudgeting->status == 1)
-                                        <td> <a href="{{ url('/bulkfile/delete/' . $assignmentfolderData->id) }}"
-                                                onclick="return confirm('Are you sure you want to delete this item?');"
-                                                class="btn btn-danger-soft btn-sm"><i class="far fa-trash-alt"></i></a></td>
+                                    @if (Auth::user()->role_id == 13 || Auth::user()->role_id == 14)
+                                        @if ($assignmentbudgeting->status == 1)
+                                            <td> <a href="{{ url('/bulkfile/delete/' . $assignmentfolderData->id) }}"
+                                                    onclick="return confirm('Are you sure you want to delete this item?');"
+                                                    class="btn btn-danger-soft btn-sm"><i class="far fa-trash-alt"></i></a>
+                                            </td>
+                                        @endif
                                     @endif
                                 </tr>
                             @endforeach
@@ -182,9 +127,8 @@
             </div>
         </div>
 
-    </div>
-
-
+    </div><!--/.body content-->
+    <!-- Modal -->
     <!--/.body content-->
     {{-- progress bar style --}}
     <style>
@@ -206,7 +150,7 @@
             display: inline-block;
             /* top: 85%; */
             left: 50%;
-            color: green;
+            color: red;
         }
     </style>
     <!-- Modal -->
@@ -283,7 +227,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- jQuery Form Plugin CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.form/4.3.0/jquery.form.min.js"></script> --}}
-
+    {{-- add file per click karne per ager dd karna hai to is script ko comment kar do --}}
     <script type="text/javascript">
         var bar = $('.bar');
         var percent = $('.percent');

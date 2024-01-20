@@ -30,8 +30,7 @@
         <div class="col-2">
             <div class="form-group">
                 <label class="font-weight-600">Assignment Name *</label>
-
-                <select required class="form-control key" name="assignment_id[]" id="assignment">
+                <select class="form-control key" name="assignment_id[]" id="assignment">
                     @if (!empty($timesheet->assignment_id))
                         <option value="{{ $timesheet->assignment_id }}">
                             {{ App / Models / Assignment::where('id', $timesheet->assignment_id)->first()->assignment_name ?? '' }}
@@ -54,17 +53,11 @@
                 </select>
             </div>
         </div>
-        {{-- <div class="col-2">
-            <div class="form-group">
-                <label class="font-weight-600" style="width:100px;">Work Item *</label>
-                <input required type="text" name="workitem[]" id="key" value="{{ $timesheet->workitem ?? '' }}"
-                    class="form-control key">
-            </div>
-        </div> --}}
         <div class="col-2">
             <div class="form-group">
                 <label class="font-weight-600" style="width:100px;">Work Item *</label>
-                <textarea required name="workitem[]" id="key" class="form-control key" rows="1">{{ $timesheet->workitem ?? '' }}</textarea>
+                <textarea required required type="text" name="workitem[]" id="key" value="{{ $timesheet->workitem ?? '' }}"
+                    class="form-control key" rows="1"></textarea>
             </div>
         </div>
         <div class="col-2">
@@ -122,7 +115,6 @@
         <div class="col-2">
             <div class="form-group">
                 <label class="font-weight-600">Assignment Name</label>
-
                 <select class="form-control key" name="assignment_id[]" id="assignment1">
                     @if (!empty($timesheet->assignment_id))
                         <option value="{{ $timesheet->assignment_id }}">
@@ -150,7 +142,8 @@
         <div class="col-2">
             <div class="form-group">
                 <label class="font-weight-600" style="width:100px;">Work Item</label>
-                <textarea name="workitem[]" id="key" class="form-control key workItem1" rows="1">{{ $timesheet->workitem ?? '' }}</textarea>
+                <textarea type="text" name="workitem[]" id="key" value="{{ $timesheet->workitem ?? '' }}"
+                    class="form-control key workItem1" rows="1"></textarea>
             </div>
         </div>
         <div class="col-2">
@@ -181,9 +174,6 @@
     <div class="row row-sm">
         <div class="col-2">
             <div class="form-group">
-                {{-- @php
-                    dd($client);
-                @endphp --}}
                 <label class="font-weight-600">Client Name</label>
                 <select class="language form-control" name="client_id[]" id="client2"
                     @if (Request::is('timesheet/*/edit')) > <option disabled style="display:block">Select
@@ -238,7 +228,8 @@
         <div class="col-2">
             <div class="form-group">
                 <label class="font-weight-600" style="width:100px;">Work Item</label>
-                <textarea name="workitem[]" id="key" class="form-control key workItem2" rows="1">{{ $timesheet->workitem ?? '' }}</textarea>
+                <textarea type="text" name="workitem[]" id="key" value="{{ $timesheet->workitem ?? '' }}"
+                    class="form-control key workItem2" rows="1"></textarea>
             </div>
         </div>
         <div class="col-2">
@@ -323,7 +314,8 @@
         <div class="col-2">
             <div class="form-group">
                 <label class="font-weight-600" style="width:100px;">Work Item</label>
-                <textarea name="workitem[]" id="key" class="form-control key workItem3" rows="1">{{ $timesheet->workitem ?? '' }}</textarea>
+                <textarea type="text" name="workitem[]" id="key" value="{{ $timesheet->workitem ?? '' }}"
+                    class="form-control key workItem3" rows="1"></textarea>
             </div>
         </div>
         <div class="col-2">
@@ -408,7 +400,8 @@
         <div class="col-2">
             <div class="form-group">
                 <label class="font-weight-600" style="width:100px;">Work Item</label>
-                <textarea name="workitem[]" id="key" class="form-control key workItem4" rows="1">{{ $timesheet->workitem ?? '' }}</textarea>
+                <textarea type="text" name="workitem[]" id="key" value="{{ $timesheet->workitem ?? '' }}"
+                    class="form-control key workItem4" rows="1"></textarea>
             </div>
         </div>
         <div class="col-2">
@@ -451,10 +444,7 @@
 </div>
 <div class="form-group">
 
-    {{-- <button type="submit" class="btn btn-success" style="float:right">Save</button> --}}
-    {{-- <button type="submit" class="btn btn-success" style="float:right" onclick="validateForm()"> Save</button> --}}
-    <button type="submit" class="btn btn-success" style="float:right">Save</button>
-
+    <button type="submit" class="btn btn-success" style="float:right"> Save</button>
     <a class="btn btn-secondary" href="{{ url('timesheet') }}">
         Back</a>
 

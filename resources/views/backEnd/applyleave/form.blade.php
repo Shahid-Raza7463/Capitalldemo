@@ -83,8 +83,6 @@
             <label class="font-weight-600">From *</label>
             <input type="date" id="startDate" name="from" value="{{ $applyleave->from ?? '' }}" required
                 class="form-control" placeholder="" maxlength="10">
-            {{-- <input type="date" id="startDate" name="from" value="{{ $applyleave->from ?? '' }}" required
-                class="form-control" placeholder="" maxlength="10"> --}}
         </div>
     </div>
     <div class="col-4">
@@ -94,15 +92,6 @@
                 class="form-control" placeholder="" maxlength="10">
         </div>
     </div>
-    {{-- <script>
-        const dateInput = document.getElementByClassName('dateInput');
-        dateInput.addEventListener('change', function() {
-            const selectedDate = new Date(this.value);
-            const formattedDate =
-                `${selectedDate.getDate()}-${selectedDate.getMonth() + 1}-${selectedDate.getFullYear()}`;
-            this.value = formattedDate;
-        });
-    </script>  --}}
     <div class="col-4" id="report" style="display: none;">
         <div class="form-group">
             <label class="font-weight-600">Medical Certificate/Doctor's Prescription *</label>
@@ -209,6 +198,7 @@
         $('.dropdown').select2();
     });
 </script>
+
 {{-- validation for date --}}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
@@ -222,7 +212,7 @@
 
             if (startDate > endDate) {
                 alert('End date should be greater than or equal to the Start date');
-                endDateInput.val('');
+                endDateInput.val(''); // Clear the end date input
             }
         }
 
@@ -239,7 +229,6 @@
             var startDateInput1 = $('#startDate').val();
             var startDate = new Date(startDateInput1);
             var startyear = startDate.getFullYear();
-            console.log(startyear);
             var yearLength = startyear.toString().length;
             if (yearLength > 4) {
                 alert('Enter four digits for the year');
@@ -257,23 +246,5 @@
                 endclear.val('');
             }
         });
-    });
-</script>
-{{-- <script>
-    const dateInput = document.getElementByClassName('dateInput');
-    dateInput.addEventListener('change', function() {
-        const selectedDate = new Date(this.value);
-        const formattedDate =
-            `${selectedDate.getDate()}-${selectedDate.getMonth() + 1}-${selectedDate.getFullYear()}`;
-        this.value = formattedDate;
-    });
-</script> --}}
-<script>
-    const dateInput = document.querySelector('.dateInput'); // Select the element with the class 'dateInput'
-    dateInput.addEventListener('change', function() {
-        const selectedDate = new Date(this.value);
-        const formattedDate =
-            `${selectedDate.getDate()}-${selectedDate.getMonth() + 1}-${selectedDate.getFullYear()}`;
-        this.value = formattedDate;
     });
 </script>

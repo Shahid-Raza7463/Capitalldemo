@@ -19,75 +19,9 @@ class NotificationController extends Controller
     {
         $this->middleware('auth');
     }
-    //! old code 
-    // public function index()
-    // {
-
-    //     if (auth()->user()->role_id == 11 || auth()->user()->role_id == 18) {
-
-    //         $notificationDatas = Notification::latest()->paginate(20);
-    //         return view('backEnd.notification.index', compact('notificationDatas'));
-    //     } elseif (auth()->user()->role_id == 13) {
-
-    //         $notificationDatas = DB::table('notifications')
-    //             ->leftjoin('teammembers', 'teammembers.id', 'notifications.created_by')
-    //             ->leftjoin('notificationtargets', 'notificationtargets.notification_id', 'notifications.id')
-    //             ->Where('targettype', '3')->orWhere('targettype', '2')
-    //             ->orwhere('notificationtargets.teammember_id', auth()->user()->teammember_id)
-    //             ->select('notifications.*')->get();
-    //         return view('backEnd.notification.index', compact('notificationDatas'));
-    //     } elseif (auth()->user()->role_id == 14) {
-    //         //	dd(auth()->user()->role_id);
-    //         $notificationDatas = DB::table('notifications')
-    //             ->leftjoin('teammembers', 'teammembers.id', 'notifications.created_by')
-    //             ->leftjoin('notificationtargets', 'notificationtargets.notification_id', 'notifications.id')
-    //             ->Where('targettype', '4')->orWhere('targettype', '2')
-    //             ->orwhere('notificationtargets.teammember_id', auth()->user()->teammember_id)
-    //             ->select('notifications.*')->get();
-    //         //dd(auth()->user()->role_id);
-    //         return view('backEnd.notification.index', compact('notificationDatas'));
-    //     } elseif (auth()->user()->role_id == 15) {
-    //         $notificationDatas = DB::table('notifications')
-    //             ->leftjoin('teammembers', 'teammembers.id', 'notifications.created_by')
-    //             ->leftjoin('notificationtargets', 'notificationtargets.notification_id', 'notifications.id')
-    //             ->Where('targettype', '5')->orWhere('targettype', '2')
-    //             ->orwhere('notificationtargets.teammember_id', auth()->user()->teammember_id)
-    //             ->select('notifications.*')->get();
-    //         return view('backEnd.notification.index', compact('notificationDatas'));
-    //     } elseif (auth()->user()->role_id == 16) {
-    //         $notificationDatas = DB::table('notifications')
-    //             ->leftjoin('teammembers', 'teammembers.id', 'notifications.created_by')
-    //             ->leftjoin('notificationtargets', 'notificationtargets.notification_id', 'notifications.id')
-    //             ->Where('targettype', '6')->orWhere('targettype', '2')
-    //             ->orwhere('notificationtargets.teammember_id', auth()->user()->teammember_id)
-    //             ->select('notifications.*')->get();
-    //         return view('backEnd.notification.index', compact('notificationDatas'));
-    //     } elseif (auth()->user()->role_id == 17) {
-    //         $notificationDatas = DB::table('notifications')
-    //             ->leftjoin('teammembers', 'teammembers.id', 'notifications.created_by')
-    //             ->leftjoin('notificationtargets', 'notificationtargets.notification_id', 'notifications.id')
-    //             ->Where('targettype', '7')->orWhere('targettype', '2')
-    //             ->orwhere('notificationtargets.teammember_id', auth()->user()->teammember_id)
-    //             ->select('notifications.*')->get();
-    //         return view('backEnd.notification.index', compact('notificationDatas'));
-    //     } else {
-
-    //         //  $notificationDatas = Notification::Where('targettype','1')->orWhere('targettype','2')->get();
-    //         $notificationDatas =  DB::table('notifications')
-    //             ->leftjoin('teammembers', 'teammembers.id', 'notifications.created_by')
-    //             ->leftjoin('notificationtargets', 'notificationtargets.notification_id', 'notifications.id')
-    //             ->where('notifications.targettype', '2')
-    //             ->orwhere('notificationtargets.teammember_id', auth()->user()->teammember_id)
-    //             ->select('notifications.*', 'teammembers.team_member', 'teammembers.profilepic')->get();
-
-    //         return view('backEnd.notification.index', compact('notificationDatas'));
-    //     }
-    // }
-
-
-    // notification listing on notification route .  notification read
     public function index()
     {
+
         if (auth()->user()->role_id == 11 || auth()->user()->role_id == 18) {
             $userId = auth()->user()->teammember_id;
             $notificationDatas = DB::table('notifications')
@@ -97,6 +31,7 @@ class NotificationController extends Controller
                 })
                 ->select('notifications.*', 'notificationreadorunread.status as readstatus')
                 ->latest()
+                ->distinct()
                 ->paginate(20);
             return view('backEnd.notification.index', compact('notificationDatas'));
         } elseif (auth()->user()->role_id == 13) {
@@ -119,8 +54,8 @@ class NotificationController extends Controller
                 })
                 ->select('notifications.*', 'notificationreadorunread.status as readstatus')
                 ->latest()
+                ->distinct()
                 ->get();
-            // dd($notificationDatas);
             return view('backEnd.notification.index', compact('notificationDatas'));
         } elseif (auth()->user()->role_id == 14) {
             $userId = auth()->user()->teammember_id;
@@ -140,6 +75,7 @@ class NotificationController extends Controller
                         });
                 })
                 ->select('notifications.*', 'notificationreadorunread.status as readstatus')
+                ->distinct()
                 ->get();
 
             return view('backEnd.notification.index', compact('notificationDatas'));
@@ -161,6 +97,7 @@ class NotificationController extends Controller
                         });
                 })
                 ->select('notifications.*', 'notificationreadorunread.status as readstatus')
+                ->distinct()
                 ->get();
 
             return view('backEnd.notification.index', compact('notificationDatas'));
@@ -182,6 +119,7 @@ class NotificationController extends Controller
                         });
                 })
                 ->select('notifications.*', 'notificationreadorunread.status as readstatus')
+                ->distinct()
                 ->get();
 
             return view('backEnd.notification.index', compact('notificationDatas'));
@@ -203,6 +141,7 @@ class NotificationController extends Controller
                         });
                 })
                 ->select('notifications.*', 'notificationreadorunread.status as readstatus')
+                ->distinct()
                 ->get();
 
             return view('backEnd.notification.index', compact('notificationDatas'));
@@ -221,6 +160,7 @@ class NotificationController extends Controller
                         ->orWhere('notificationtargets.teammember_id', $userId);
                 })
                 ->select('notifications.*', 'teammembers.team_member', 'teammembers.profilepic', 'notificationreadorunread.status as readstatus')
+                ->distinct()
                 ->get();
 
             return view('backEnd.notification.index', compact('notificationDatas'));
@@ -235,11 +175,10 @@ class NotificationController extends Controller
      */
     public function create()
     {
-        //   dd($teammembers);
         $teammember = Teammember::Where('role_id', '!=', '12')->where('status', 1)
             ->where('id', '!=', auth()->user()->teammember_id)->with('role')->get();
 
-        // dd($teammember);
+        //   dd($teammembers);
         return view('backEnd.notification.create', compact('teammember'));
     }
 
@@ -249,7 +188,6 @@ class NotificationController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    //! old code 
     // public function store(Request $request)
     // {
     //     dd($request->targettype[0]);
@@ -411,9 +349,9 @@ class NotificationController extends Controller
 
 
 
-    public function store(Request $request)
+   public function store(Request $request)
     {
-        // dd($request->targettype);
+        // dd($request->targettype[0]);
         try {
             $authid = auth()->user()->teammember_id;
             $data = $request->except(['_token']);
@@ -646,35 +584,7 @@ class NotificationController extends Controller
      * @param  \App\Models\Notification  $notification
      * @return \Illuminate\Http\Response
      */
-    // public function show($id)
-    // {
-    //     dd($id);
-    //     $notificationData =  DB::table('notifications')
-    //         ->where('id', $id)->first();
-
-
-    //     //dd($notificationData);
-    //     return view('backEnd.notification.view', compact('notificationData'));
-    // }
-
-    // running code 
-    // public function show($id)
-    // {
-    //     // dd($id);
-    //     $notificationData =  DB::table('notifications')
-    //         ->where('id', $id)->first();
-
-    //     // dd($notificationData);
-    //     // $affectedRows = DB::table('notifications')
-    //     //     ->where('id', $id)
-    //     //     ->update(['read_at' => now()]);
-
-    //     //dd($notificationData);
-    //     return view('backEnd.notification.view', compact('notificationData'));
-    // }
-
-    // notification show and notification read or unread functionality. notification read
-    public function show($id)
+   public function show($id)
     {
         $notificationData =  DB::table('notifications')
             ->where('id', $id)->first();

@@ -1,2 +1,3 @@
 <br>
-<p> {!! $mail_content ?? '' !!}</p>
+<p> {!! $mail_content ??'' !!}</p>
+

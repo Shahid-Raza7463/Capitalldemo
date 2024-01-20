@@ -1,8 +1,8 @@
 <div class="row row-sm">
     <div class="col-6">
         <div class="form-group">
-            <label class="font-weight-600">Subject</label>
-            <input type="text" name="title" value="{{ $notification->title ?? '' }}" class="form-control"
+            <label class="font-weight-600">Subject *</label>
+            <input type="text" required name="title" value="{{ $notification->title ?? '' }}" class="form-control"
                 placeholder="Enter Subject">
         </div>
     </div>
@@ -24,9 +24,9 @@
 
     <div class="col-6">
         <div class="form-group">
-            <label class="font-weight-600">Target.</label>
+            <label class="font-weight-600">Target *</label>
 
-            <select class="form-control basic-multiple" multiple="multiple" id="exampleFormControlSelect1"
+            <select required class="form-control basic-multiple" multiple="multiple" id="exampleFormControlSelect1"
                 name="targettype[]">
                 <option value="" disabled> Please Select One</option>
                 <option value="1">Individual</option>
@@ -78,7 +78,7 @@
 <div class="row row-sm">
     <div class="col-12">
         <div class="form-group">
-            <label class="font-weight-600">Announcement Content</label>
+            <label class="font-weight-600">Announcement Content *</label>
             <textarea rows="4" name="mail_content" class="centered form-control" id="summernote"
                 placeholder="Enter Description" id="editors" style="height:500px;"></textarea>
         </div>

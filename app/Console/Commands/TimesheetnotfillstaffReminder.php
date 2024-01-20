@@ -38,88 +38,20 @@ class TimesheetnotfillstaffReminder extends Command
      *
      * @return int
      */
-    //! old code 
-    // public function handle()
-    // {
-    //     // dd(date('l', time()));
-    //     if ('Thursday' == date('l', time()) || 'Saturday' == date('l', time())) {
-    //         // Get data that is not fill timesheet
-    //         // $teammember =  DB::table('teammembers')
-    //         //     ->whereNotIn('id', function ($query) {
-    //         //         $query->select('createdby')->from('timesheetusers');
-    //         //     })
-    //         //     ->where('teammembers.status', 1)
-    //         //     ->whereIn('teammembers.role_id', [13, 14, 15]);
-
-    //         // $teammemberChunks = array_chunk($teammember->pluck('id')->toArray(), 1000);
-
-    //         // foreach ($teammemberChunks as $chunk) {
-    //         //     $teammembersChunk = DB::table('teammembers')
-    //         //         ->whereIn('id', $chunk)
-    //         //         ->select('teammembers.emailid', 'teammembers.team_member', 'teammembers.id')
-    //         //         ->get();
-    //         //     // dd($teammembersChunk);
-    //         //     foreach ($teammembersChunk as $teammembermail) {
-    //         //         $data = array(
-    //         //             'subject' => "Reminder || Timesheet not filled till date",
-    //         //             'name' =>   $teammembermail->team_member,
-    //         //             'email' =>   $teammembermail->emailid,
-    //         //         );
-    //         //         Mail::send('emails.timesheetnotfilledstaffremidner', $data, function ($msg) use ($data) {
-    //         //             $msg->to($data['email']);
-    //         //             $msg->subject($data['subject']);
-    //         //         });
-    //         //     }
-    //         // }
-
-
-    //         // 222222222222222222222222222222222222
-    //         // another mail start from hare
-    //         $teammembers = DB::table('teammembers')
-    //             ->leftJoin('timesheetusers', 'timesheetusers.createdby', 'teammembers.id')
-    //             ->where('timesheetusers.date', '<', now()->subWeeks(1))
-    //             ->select('teammembers.emailid', 'teammembers.team_member', 'teammembers.id')
-    //             ->distinct('timesheetusers.createdby')
-    //             ->get();
-
-    //         // Get the last submission date for each user
-    //         foreach ($teammembers as $user) {
-    //             $lastSubmissionDate = DB::table('timesheetusers')
-    //                 // get all date of this user
-    //                 ->where('createdby', $user->id)
-    //                 ->where('date', '<', now()->subWeeks(1))
-    //                 ->max('date');
-
-    //             $user->last_submission_date = $lastSubmissionDate;
-    //         }
-    //         // dd($teammembers);
-    //         foreach ($teammembers as $teammembermail) {
-    //             $data = array(
-    //                 'subject' => "Reminder || Timesheet not filled Last Week",
-    //                 'name' =>   $teammembermail->team_member,
-    //                 'email' =>   $teammembermail->emailid,
-    //             );
-    //             Mail::send('emails.timesheetnotfilledstafflastweekremidner', $data, function ($msg) use ($data) {
-    //                 $msg->to($data['email']);
-    //                 $msg->subject($data['subject']);
-    //             });
-    //         }
-    //     }
-    // }
     public function handle()
     {
         // dd(date('l', time()));
-        if ('Thursday' == date('l', time()) || 'Saturday' == date('l', time())) {
+        if ('Wednesday' == date('l', time()) || 'Saturday' == date('l', time())) {
             // Get data that is not fill timesheet
             $teammember =  DB::table('teammembers')
-                ->where('teammembers.status', 1)
                 ->whereNotIn('id', function ($query) {
                     $query->select('createdby')->from('timesheetusers');
                 })
+                ->where('teammembers.status', 1)
                 ->whereIn('teammembers.role_id', [13, 14, 15]);
 
             $teammemberChunks = array_chunk($teammember->pluck('id')->toArray(), 1000);
-            // dd($teammemberChunks);
+
             foreach ($teammemberChunks as $chunk) {
                 $teammembersChunk = DB::table('teammembers')
                     ->whereIn('id', $chunk)
@@ -170,17 +102,33 @@ class TimesheetnotfillstaffReminder extends Command
 
                 $user->last_submission_date = $lastSubmissionDate;
             }
+
+            // find previus sunday 
+            $previewsunday = now()->subWeeks(1)->endOfWeek();
+            $previewsundayformate = $previewsunday->format('d-m-Y');
+
+            // find previus saturday
+            $previewsaturday = now()->subWeeks(1)->endOfWeek();
+            // Subtract one day from sunday
+            $previewsaturdaydate = $previewsaturday->subDay();
+            $previewsaturdaydateformate = $previewsaturdaydate->format('d-m-Y');
+
             foreach ($teammembers as $teammembermail) {
-                $data = array(
-                    'subject' => "Reminder || Timesheet not filled Last Week",
-                    'name' =>   $teammembermail->team_member,
-                    'email' =>   $teammembermail->emailid,
-                );
-                Mail::send('emails.timesheetnotfilledstafflastweekremidner', $data, function ($msg) use ($data) {
-                    $msg->to($data['email']);
-                    $msg->subject($data['subject']);
-                });
+                // both date store in an array 
+                $validDates = [$previewsundayformate, $previewsaturdaydateformate];
+                if (!in_array($teammembermail->last_submission_date, $validDates)) {
+                    $data = array(
+                        'subject' => "Reminder || Timesheet not filled Last Week",
+                        'name' =>   $teammembermail->team_member,
+                        'email' =>   $teammembermail->emailid,
+                    );
+                    Mail::send('emails.timesheetnotfilledstafflastweekremidner', $data, function ($msg) use ($data) {
+                        $msg->to($data['email']);
+                        $msg->subject($data['subject']);
+                    });
+                }
             }
         }
     }
+    
 }

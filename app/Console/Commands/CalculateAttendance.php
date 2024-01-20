@@ -235,11 +235,10 @@ class CalculateAttendance extends Command
             }
 
             $attendance_existing = DB::table('attendances')->where('employee_name', $team->employee_name)->where('month', $currentMonth)->first();
-
-            if ($dayspresent == 0) {
-                $holidayCount = 0;
-            }
-
+			if($dayspresent == 0)
+      {
+        $holidayCount = 0;
+      }
             $totalCount = $dayspresent +  $attendance_existing->casual_leave + $attendance_existing->sick_leave  + $attendance_existing->birthday_religious + $holidayCount;
 
 

@@ -80,32 +80,29 @@
 </html> --}}
 <!doctype html>
 <html lang="en">
-
-<head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="V. Sankar Aiyar & Co">
-    <meta name="author" content="Bdtask">
-    <!-- CSRF Token -->
+    <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="description" content="V. Sankar Aiyar & Co">
+        <meta name="author" content="Bdtask">
+        <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>V. Sankar Aiyar & Co</title>
-
-    <!-- stylesheet start -->
+        <title>V. Sankar Aiyar & Co</title>
+      
+           <!-- stylesheet start -->
     @include('backEnd.layouts.includes.stylesheet')
     <!-- stylesheet end -->
-</head>
-
-<body class="bg-white">
-    <!-- Main Content start-->
+    </head>
+    <body class="bg-white">
+         <!-- Main Content start-->
     @yield('content')
     <!-- Main Content end-->
-    <!-- /.End of form wrapper -->
-    <!-- js bar start-->
+        <!-- /.End of form wrapper -->
+         <!-- js bar start-->
     @include('backEnd.layouts.includes.js')
     <!-- js bar end -->
+   
 
-
-</body>
-
+    </body>
 </html>

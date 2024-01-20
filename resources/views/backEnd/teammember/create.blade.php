@@ -33,15 +33,16 @@
     <!--/.body content-->
 @endsection
 
-
-{{-- validation for year --}}
+<!--Page Active Scripts(used by this page)-->
+<script src="{{ url('backEnd/dist/js/pages/forms-basic.active.js') }}"></script>
+<!--Page Scripts(used by all page)-->
+<script src="{{ url('backEnd/dist/js/sidebar.js') }}"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
         $('.leaveDate').on('change', function() {
-            var leaveDate = $('.leaveDate');
-            var leaveDateValue = $('.leaveDate').val();
-            console.log(leaveDateValue);
+            var leaveDate = $(this);
+            var leaveDateValue = leaveDate.val();
             var leaveDateGet = new Date(leaveDateValue);
             var leaveyear = leaveDateGet.getFullYear();
             // console.log(startyear);
@@ -53,8 +54,3 @@
         });
     });
 </script>
-
-<!--Page Active Scripts(used by this page)-->
-<script src="{{ url('backEnd/dist/js/pages/forms-basic.active.js') }}"></script>
-<!--Page Scripts(used by all page)-->
-<script src="{{ url('backEnd/dist/js/sidebar.js') }}"></script>

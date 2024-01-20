@@ -27,6 +27,41 @@ class ApplyleaveController extends Controller
   {
     $this->middleware('auth');
   }
+  public function open_leave($id)
+  {
+    if (auth()->user()->role_id == 11) {
+
+      $teamapplyleaveDatas  = DB::table('applyleaves')
+        ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+        ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
+        ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+        ->where('applyleaves.status', '0')
+        ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->get();
+      // dd($applyleaveDatas);
+      return view('backEnd.applyleave.adminopen', compact(
+        'teamapplyleaveDatas'
+      ));
+    } else {
+      $myapplyleaveDatas  = DB::table('applyleaves')
+        ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+        ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
+        ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+        ->where('applyleaves.createdby', auth()->user()->teammember_id)
+        ->where('applyleaves.status', 0)
+        ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->latest()->get();
+      $teamapplyleaveDatas  = DB::table('applyleaves')
+        ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+        ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
+        ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+        ->where('applyleaves.approver', auth()->user()->teammember_id)
+        ->where('applyleaves.status', 0)
+        ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->get();
+      return view('backEnd.applyleave.openindex', compact(
+        'myapplyleaveDatas',
+        'teamapplyleaveDatas'
+      ));
+    }
+  }
   public function teamApplication()
   {
     $birthday = DB::table('leavetypes')->where('year', '2023')->where('name', 'Birthday/Religious Festival')->first();
@@ -60,6 +95,378 @@ class ApplyleaveController extends Controller
       return view('backEnd.applyleave.teamapplication', compact('teammember', 'totalcountCasual', 'myapplyleaveDatas', 'birthday', 'countbirthday', 'Casual', 'Sick', 'countSick', 'countCasual'));
     }
   }
+
+  public function examleaverequest(Request $request, $id)
+  {
+    try {
+
+      if ($request->status == 1) {
+        $team = DB::table('leaverequest')
+          ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
+          ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+          ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
+          ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+          ->where('leaverequest.id', $id)
+          ->select('applyleaves.*', 'teammembers.emailid', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name', 'leavetypes.holiday', 'leaverequest.id as examrequestId', 'leaverequest.date')
+          ->first();
+
+        if ($team->name == 'Exam Leave') {
+
+          $from = Carbon::createFromFormat('Y-m-d', $team->from);
+          $to = Carbon::createFromFormat('Y-m-d', $team->to ?? '');
+          // came during exam leave
+          $camefromexam = Carbon::createFromFormat('Y-m-d', $team->date);
+
+          $removedays = $to->diffInDays($camefromexam) + 1;
+
+          $nowtotalleave = $from->diffInDays($camefromexam);
+          // it si only serching data from dtabase 
+          $finddatafromleaverequest = $to->diffInDays($from) + 1;
+
+          // Update date in to  column in applyleaves table 
+          $updatedcamedate = $camefromexam->copy()->subDay()->format('Y-m-d');
+
+          // dd($updatedcamedate);
+
+          DB::table('applyleaves')
+            ->where('from', $team->from)
+            ->where('to', $team->to)
+            ->where('createdby', $team->createdby)
+            ->update([
+              'to' => $updatedcamedate,
+            ]);
+
+          // DB::table('applyleaves')
+          // ->where('id', $team->id)
+          // ->update([
+          //   'to' => $team->date,
+          // ]);
+
+
+          // for approved
+          DB::table('leaverequest')
+            ->where('id', $team->examrequestId)
+            ->update([
+              'status' => 1,
+            ]);
+
+          // update total leave after came during exam
+          DB::table('leaveapprove')
+            ->where('teammemberid', $team->createdby)
+            ->where('totaldays', $finddatafromleaverequest)
+            ->latest()
+            ->update([
+              'totaldays' => $nowtotalleave,
+              'updated_at' => now(),
+            ]);
+
+          // get date
+          $period = CarbonPeriod::create($team->date, $team->to);
+
+          $datess = [];
+          foreach ($period as $date) {
+            $datess[] = $date->format('Y-m-d');
+
+            $deletedIds = DB::table('timesheets')
+              ->where('created_by', $team->createdby)
+              ->whereIn('date', $datess)
+              ->pluck('id');
+
+            DB::table('timesheets')
+              ->where('created_by', $team->createdby)
+              ->whereIn('date', $datess)
+              ->delete();
+
+            $a = DB::table('timesheetusers')
+              ->whereIn('timesheetid', $deletedIds)
+              ->delete();
+          }
+
+          // dd($hdatess);
+          $el_leave = $datess;
+          $lstatus = null;
+
+          foreach ($el_leave as $cl_leave) {
+            $cl_leave_day = date('d', strtotime($cl_leave));
+            $cl_leave_month = date('F', strtotime($cl_leave));
+
+            if ($cl_leave_day >= 26 && $cl_leave_day <= 31) {
+              $cl_leave_month = date('F', strtotime($cl_leave . ' +1 month'));
+            }
+
+            $attendances = DB::table('attendances')->where('employee_name', $team->createdby)
+              ->where('month', $cl_leave_month)->first();
+            // September
+            // dd($attendances);
+            $column = '';
+            switch ($cl_leave_day) {
+              case '26':
+                $column = 'twentysix';
+                break;
+              case '27':
+                $column = 'twentyseven';
+                break;
+              case '28':
+                $column = 'twentyeight';
+                break;
+              case '29':
+                $column = 'twentynine';
+                break;
+              case '30':
+                $column = 'thirty';
+                break;
+              case '31':
+                $column = 'thirtyone';
+                break;
+              case '01':
+                $column = 'one';
+                break;
+              case '02':
+                $column = 'two';
+                break;
+              case '03':
+                $column = 'three';
+                break;
+              case '04':
+                $column = 'four';
+                break;
+              case '05':
+                $column = 'five';
+                break;
+              case '06':
+                $column = 'six';
+                break;
+              case '07':
+                $column = 'seven';
+                break;
+              case '08':
+                $column = 'eight';
+                break;
+              case '09':
+                $column = 'nine';
+                break;
+              case '10':
+                $column = 'ten';
+                break;
+              case '11':
+                $column = 'eleven';
+                break;
+              case '12':
+                $column = 'twelve';
+                break;
+              case '13':
+                $column = 'thirteen';
+                break;
+              case '14':
+                $column = 'fourteen';
+                break;
+              case '15':
+                $column = 'fifteen';
+                break;
+              case '16':
+                $column = 'sixteen';
+                break;
+              case '17':
+                $column = 'seventeen';
+                break;
+              case '18':
+                $column = 'eighteen';
+                break;
+              case '19':
+                $column = 'ninghteen';
+                break;
+              case '20':
+                $column = 'twenty';
+                break;
+              case '21':
+                $column = 'twentyone';
+                break;
+              case '22':
+                $column = 'twentytwo';
+                break;
+              case '23':
+                $column = 'twentythree';
+                break;
+              case '24':
+                $column = 'twentyfour';
+                break;
+              case '25':
+                $column = 'twentyfive';
+                break;
+            }
+
+            if (!empty($column)) {
+              // store EL/A sexteen to 25 tak 
+              DB::table('attendances')
+                ->where('employee_name', $team->createdby)
+                ->where('month', $cl_leave_month)
+                ->whereRaw("NOT ({$column} REGEXP '^-?[0-9]+$')")
+                ->whereRaw("{$column} != 'LWP'")
+                ->update([
+                  $column => $lstatus,
+                ]);
+            }
+          }
+        }
+        // For approving mail
+        $applyleaveteam = DB::table('leaverequest')
+          ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
+          ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+          ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
+          ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+          ->where('leaverequest.id', $id)
+          ->select('applyleaves.*', 'teammembers.emailid', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name', 'leavetypes.holiday', 'leaverequest.id as examrequestId', 'leaverequest.date')
+          ->get();
+
+        if ($applyleaveteam != null) {
+          foreach ($applyleaveteam as $applyleaveteammail) {
+            $data = array(
+              'emailid' =>  $applyleaveteammail->emailid,
+              'team_member' =>  $team->team_member,
+              'from' =>  $team->from,
+              'to' =>  $team->to,
+            );
+
+            Mail::send('emails.applyleaveteam', $data, function ($msg) use ($data) {
+              $msg->to($data['emailid']);
+              $msg->subject('VSA Leave Approved');
+            });
+          }
+        }
+        $data = array(
+          'emailid' =>  $team->emailid,
+          'id' =>  $id,
+          'from' =>  $team->from,
+          'to' =>  $team->to,
+        );
+
+        Mail::send('emails.duringexamleavestatus', $data, function ($msg) use ($data) {
+          $msg->to($data['emailid']);
+          $msg->subject('VSA Exam Leave request Approved');
+        });
+      }
+      if ($request->status == 2) {
+        $team = DB::table('leaverequest')
+          ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
+          ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+          ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
+          ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+          ->where('leaverequest.id', $id)
+          ->select('applyleaves.*', 'teammembers.emailid', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name', 'leavetypes.holiday', 'leaverequest.id as examrequestId', 'leaverequest.date')
+          ->first();
+
+        DB::table('leaverequest')
+          ->where('id', $team->examrequestId)
+          ->update([
+            'status' => 2,
+          ]);
+
+        $data = array(
+          'emailid' =>  $team->emailid,
+          'id' =>  $id,
+          'from' =>  $team->from,
+          'to' =>  $team->to,
+        );
+
+        Mail::send('emails.duringexamleavereject', $data, function ($msg) use ($data) {
+          $msg->to($data['emailid']);
+          // $msg->cc('priyankasharma@kgsomani.com');
+          $msg->subject('VSA Exam Leave Request Reject');
+        });
+      }
+
+      $output = array('msg' => 'Updated Successfully');
+      return redirect('examleaverequestlist')->with('success', $output);
+    } catch (Exception $e) {
+      DB::rollBack();
+      Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
+      report($e);
+      $output = array('msg' => $e->getMessage());
+      return back()->withErrors($output)->withInput();
+    }
+  }
+
+  public function examleaverequestlist()
+  {
+    if (auth()->user()->role_id == 11) {
+
+      $timesheetrequestsDatas = DB::table('leaverequest')
+        ->leftjoin('teammembers', 'teammembers.id', 'leaverequest.approver')
+        ->leftjoin('teammembers as createdby', 'createdby.id', 'leaverequest.createdby')
+        ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
+        ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+        // ->where('createdby.id', auth()->user()->teammember_id)
+        ->select(
+          'leaverequest.*',
+          'teammembers.team_member',
+          'applyleaves.leavetype',
+          'leavetypes.name',
+          'createdby.team_member as createdbyauth'
+        )->get();
+
+      return view('backEnd.applyleave.adminrevertleave', compact(
+        'timesheetrequestsDatas',
+
+      ));
+    } else {
+
+      $timesheetrequestsDatas = DB::table('leaverequest')
+        ->leftjoin('teammembers', 'teammembers.id', 'leaverequest.approver')
+        ->leftjoin('teammembers as createdby', 'createdby.id', 'leaverequest.createdby')
+        ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
+        ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+        ->where('createdby.id', auth()->user()->teammember_id)
+        ->select(
+          'leaverequest.*',
+          'teammembers.team_member',
+          'applyleaves.leavetype',
+          'leavetypes.name',
+          'createdby.team_member as createdbyauth'
+        )->get();
+      $myteamtimesheetrequestsDatas = DB::table('leaverequest')
+        ->leftjoin('teammembers', 'teammembers.id', 'leaverequest.approver')
+        ->leftjoin('teammembers as createdby', 'createdby.id', 'leaverequest.createdby')
+        ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
+        ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+        ->where('leaverequest.approver', auth()->user()->teammember_id)
+        ->select(
+          'leaverequest.*',
+          'teammembers.team_member',
+          'applyleaves.leavetype',
+          'leavetypes.name',
+          'createdby.team_member as createdbyauth'
+        )->get();
+
+      return view('backEnd.applyleave.examrequestlist', compact('timesheetrequestsDatas', 'myteamtimesheetrequestsDatas'));
+    }
+  }
+
+  public function exampleleaveshow($id)
+  {
+    //dd($id);
+    $applyleave = DB::table('leaverequest')
+      ->leftjoin('teammembers', 'teammembers.id', 'leaverequest.approver')
+      ->leftjoin('teammembers as createdby', 'createdby.id', 'leaverequest.createdby')
+      ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
+      ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
+      ->where('leaverequest.id', $id)
+      ->select(
+        'leaverequest.*',
+        'teammembers.team_member as approverName',
+        'applyleaves.leavetype',
+        'leavetypes.name',
+        'createdby.team_member as createdbyauth'
+      )->first();
+    // dd($applyleave);
+    $applyleaveteam = DB::table('leaveteams')
+      ->leftjoin('teammembers', 'teammembers.id', 'leaveteams.teammember_id')
+      ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
+      ->where('leaveteams.leave_id', $id)
+      ->select('teammembers.team_member', 'roles.rolename')->get();
+    // dd($fullandfinal);
+    return view('backEnd.applyleave.examleaveshow', compact('id', 'applyleave', 'applyleaveteam'));
+  }
+
 
   public function teamapplicationStore(Request $request)
   {
@@ -258,10 +665,12 @@ class ApplyleaveController extends Controller
     }
 
     $role_id = Teammember::find($request->member)->role_id;
+
+
     return view('backEnd.applyleave.teamapplication', compact('countCasualafmnth', 'leavetaken', 'teammonthcount', 'totalcountCasual', 'teamapplyleaveDatas', 'birthday', 'countbirthday', 'Casual', 'Sick', 'countSick', 'countCasual', 'clInAttendance', 'slInAttendance', 'teammember', 'role_id'));
   }
 
-  // exam leave request
+
   public function leaverequeststore(Request $request)
   {
     // dd($request);
@@ -287,840 +696,6 @@ class ApplyleaveController extends Controller
 
     return redirect()->back()->with('message', 'Your Request Submitted');
   }
-
-  // exam leave request
-  // public function examleaverequestlist()
-  // {
-
-  //   if (auth()->user()->role_id == 11 || auth()->user()->role_id == 18) {
-  //     // $timesheetrequestsDatas = DB::table('timesheetrequests')
-  //     //   ->leftjoin('clients', 'clients.id', 'timesheetrequests.client_id')
-  //     //   ->leftjoin('assignments', 'assignments.id', 'timesheetrequests.assignment_id')
-  //     //   ->leftjoin('teammembers', 'teammembers.id', 'timesheetrequests.partner')
-  //     //   ->leftjoin('teammembers as createdby', 'createdby.id', 'timesheetrequests.createdby')
-  //     //   ->select(
-  //     //     'timesheetrequests.*',
-  //     //     'clients.client_name',
-  //     //     'assignments.assignment_name',
-  //     //     'teammembers.team_member',
-  //     //     'createdby.team_member as createdbyauth'
-  //     //   )->get();
-  //     $timesheetrequestsDatas = DB::table('leaverequest')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'leaverequest.approver')
-  //       ->leftjoin('teammembers as createdby', 'createdby.id', 'leaverequest.createdby')
-  //       ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
-  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-  //       // ->where('createdby.id', auth()->user()->teammember_id)
-  //       ->select(
-  //         'leaverequest.*',
-  //         'teammembers.team_member',
-  //         'applyleaves.leavetype',
-  //         'leavetypes.name',
-  //         'createdby.team_member as createdbyauth'
-  //       )->get();
-  //     // dd($timesheetrequestsDatas);
-  //     return view('backEnd.applyleave.examrequestlist', compact('timesheetrequestsDatas'));
-  //   } elseif (auth()->user()->role_id == 13) {
-
-  //     $timesheetrequestsDatas = DB::table('leaverequest')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'leaverequest.approver')
-  //       ->leftjoin('teammembers as createdby', 'createdby.id', 'leaverequest.createdby')
-  //       ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
-  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-  //       ->where('createdby.id', auth()->user()->teammember_id)
-  //       ->select(
-  //         'leaverequest.*',
-  //         'teammembers.team_member',
-  //         'applyleaves.leavetype',
-  //         'leavetypes.name',
-  //         'createdby.team_member as createdbyauth'
-  //       )->get();
-
-  //     // dd($timesheetrequestsDatas);
-  //     return view('backEnd.applyleave.examrequestlist', compact('timesheetrequestsDatas'));
-  //   } else {
-  //     // $timesheetrequestsDatas = DB::table('timesheetrequests')
-  //     //   ->leftjoin('clients', 'clients.id', 'timesheetrequests.client_id')
-  //     //   ->leftjoin('assignments', 'assignments.id', 'timesheetrequests.assignment_id')
-  //     //   ->leftjoin('teammembers', 'teammembers.id', 'timesheetrequests.partner')
-  //     //   ->leftjoin('teammembers as createdby', 'createdby.id', 'timesheetrequests.createdby')
-  //     //   ->where('timesheetrequests.createdby', auth()->user()->teammember_id)
-
-  //     //   ->select(
-  //     //     'timesheetrequests.*',
-  //     //     'clients.client_name',
-  //     //     'assignments.assignment_name',
-  //     //     'teammembers.team_member',
-  //     //     'createdby.team_member as createdbyauth'
-  //     //   )->get();
-
-  //     $timesheetrequestsDatas = DB::table('leaverequest')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'leaverequest.approver')
-  //       ->leftjoin('teammembers as createdby', 'createdby.id', 'leaverequest.createdby')
-  //       ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
-  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-  //       ->where('createdby.id', auth()->user()->teammember_id)
-  //       ->select(
-  //         'leaverequest.*',
-  //         'teammembers.team_member',
-  //         'applyleaves.leavetype',
-  //         'leavetypes.name',
-  //         'createdby.team_member as createdbyauth'
-  //       )->get();
-
-  //     return view('backEnd.applyleave.examrequestlist', compact('timesheetrequestsDatas'));
-  //   }
-  // }
-
-  // exam leave request after comming 
-  public function examleaverequestlist()
-  {
-    if (auth()->user()->role_id == 11) {
-
-      $timesheetrequestsDatas = DB::table('leaverequest')
-        ->leftjoin('teammembers', 'teammembers.id', 'leaverequest.approver')
-        ->leftjoin('teammembers as createdby', 'createdby.id', 'leaverequest.createdby')
-        ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
-        ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-        // ->where('createdby.id', auth()->user()->teammember_id)
-        ->select(
-          'leaverequest.*',
-          'teammembers.team_member',
-          'applyleaves.leavetype',
-          'leavetypes.name',
-          'createdby.team_member as createdbyauth'
-        )->get();
-
-      return view('backEnd.applyleave.adminrevertleave', compact(
-        'timesheetrequestsDatas',
-
-      ));
-    } else {
-
-      $timesheetrequestsDatas = DB::table('leaverequest')
-        ->leftjoin('teammembers', 'teammembers.id', 'leaverequest.approver')
-        ->leftjoin('teammembers as createdby', 'createdby.id', 'leaverequest.createdby')
-        ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
-        ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-        ->where('createdby.id', auth()->user()->teammember_id)
-        ->select(
-          'leaverequest.*',
-          'teammembers.team_member',
-          'applyleaves.leavetype',
-          'leavetypes.name',
-          'createdby.team_member as createdbyauth'
-        )->get();
-
-      // $teamapplyleaveDatas  = DB::table('applyleaves')
-      //   ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-      //   ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
-      //   ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
-      //   ->where('applyleaves.approver', auth()->user()->teammember_id)
-      //   ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->get();
-
-      // patner teammember data 
-      // $myteamtimesheetrequestsDatas = DB::table('leaverequest')
-      //   ->leftjoin('teammembers', 'teammembers.id', 'leaverequest.approver')
-      //   ->leftjoin('teammembers as createdby', 'createdby.id', 'leaverequest.createdby')
-      //   ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
-      //   ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-      //   ->where('createdby.id', auth()->user()->teammember_id)
-      //   ->select(
-      //     'leaverequest.*',
-      //     'teammembers.team_member',
-      //     'applyleaves.leavetype',
-      //     'leavetypes.name',
-      //     'createdby.team_member as createdbyauth'
-      //   )->get();
-      $myteamtimesheetrequestsDatas = DB::table('leaverequest')
-        ->leftjoin('teammembers', 'teammembers.id', 'leaverequest.approver')
-        ->leftjoin('teammembers as createdby', 'createdby.id', 'leaverequest.createdby')
-        ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
-        ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-        ->where('leaverequest.approver', auth()->user()->teammember_id)
-        ->select(
-          'leaverequest.*',
-          'teammembers.team_member',
-          'applyleaves.leavetype',
-          'leavetypes.name',
-          'createdby.team_member as createdbyauth'
-        )->get();
-
-      return view('backEnd.applyleave.examrequestlist', compact('timesheetrequestsDatas', 'myteamtimesheetrequestsDatas'));
-    }
-  }
-  //! old code 26-12-23
-  // public function index()
-  // {
-
-  //   $currentdate = date('Y-m-d');
-  //   $currentYear = date('Y');
-  //   $financialYearStart = $currentYear . '-04-01';
-  //   $financialYearEnd = ($currentYear + 1) . '-03-31';
-
-  //   $casualteam = DB::table('teammembers')->where('id', auth()->user()->teammember_id)->first();
-
-  //   $birthday = DB::table('leavetypes')
-  //     ->where('year', $currentYear)->where('name', 'Birthday/Religious Festival')->first();
-  //   $Casual = DB::table('leavetypes')->where('year', $currentYear)->where('name', 'Casual Leave')->first();
-  //   $Sick = DB::table('leavetypes')->where('year', $currentYear)->where('name', 'Sick Leave')->first();
-  //   //  dd($casualteam);
-  //   if ($casualteam->joining_date < $Casual->startdate) {
-
-  //     $to = \Carbon\Carbon::createFromFormat('Y-m-d', $Casual->startdate);
-  //   } else {
-  //     $to = \Carbon\Carbon::createFromFormat('Y-m-d', $casualteam->joining_date);
-  //   }
-
-
-
-
-  //   $diff_in_months = $to->diffInMonths($currentdate) + 1;
-  //   if (\Carbon\Carbon::createFromFormat('Y-m-d', $casualteam->joining_date)->diffInDays($currentdate) < 90) {
-  //     $diff_in_months = 0;
-  //   }
-  //   //dd($diff_in_months);
-  //   $teamdate = \Carbon\Carbon::createFromFormat('Y-m-d', $casualteam->joining_date);
-  //   //   $currentdate = date('Y-m-d');
-  //   $teammonthcount = $teamdate->diffInMonths($currentdate) + 1;
-  //   if ($teamdate->diffInDays($currentdate) < 90) {
-  //     $teammonthcount = 0;
-  //   }
-
-  //   if (auth()->user()->teammember_id == 434 || auth()->user()->teammember_id == 429) {
-  //     $teammember = Teammember::with('role:id,rolename')
-  //       ->whereNotNull('joining_date')
-  //       ->get();
-
-
-
-
-  //     $appliedSick = DB::table('applyleaves')
-  //       ->where('status', '!=', '2')
-  //       ->where('leavetype', $Sick->id)
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->get();
-
-  //     $countSick = 0;
-
-  //     foreach ($appliedSick as $sickLeave) {
-  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->from);
-  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->to);
-  //       $period = CarbonPeriod::create($fromDate, $toDate);
-
-  //       $datess = [];
-  //       foreach ($period as $date) {
-  //         $datess[] = $date->format('Y-m-d');
-  //       }
-
-  //       $getholidays = DB::table('holidays')->where('startdate', '>=', $toDate)
-  //         ->where('enddate', '<=', $toDate)->select('startdate')->get();
-
-  //       $hdatess = [];
-  //       foreach ($getholidays as $date) {
-  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
-  //       }
-
-  //       $countSick = array_diff($datess, $hdatess);
-  //     }
-
-  //     $countSick = DB::table('leaveapprove')
-  //       ->where('year', $currentYear)->where('leavetype', $Sick->id)
-  //       ->where('teammemberid', auth()->user()->teammember_id)->sum('totaldays');
-  //     //  dd($countSick);
-  //     $countCasual = DB::table('leaveapprove')
-  //       ->where('year', $currentYear)->where('leavetype', $Casual->id)
-  //       ->where('teammemberid', auth()->user()->teammember_id)->sum('totaldays');
-
-  //     $countCasualafmnth = DB::table('leaveapprove')
-  //       ->where('year', $currentYear)
-  //       ->where('leavetype', $Casual->id)
-  //       ->where('teammemberid', auth()->user()->teammember_id)
-  //       ->where('created_at', '>', Carbon::createFromFormat('Y-m-d', $casualteam->joining_date)->addMonths(3))->sum('totaldays');
-
-  //     $countbirthday = DB::table('leaveapprove')
-  //       ->where('year', $currentYear)->where('leavetype', $birthday->id)
-  //       ->where('teammemberid', auth()->user()->teammember_id)->sum('totaldays');
-
-  //     //dd($countSick);
-  //     $totalcountCasual = $Casual->noofdays * $diff_in_months;
-  //     // dd($totalcountCasual);
-  //     //  dd($countCasualafmnth);
-  //     $teamapplyleaveDatas  = DB::table('applyleaves')
-  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
-  //       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
-  //       ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->get();
-  //     // dd($applyleaveDatas);
-  //     return view('backEnd.applyleave.teamapplication', compact(
-  //       'teammember',
-  //       'countCasualafmnth',
-  //       'teammonthcount',
-  //       'totalcountCasual',
-  //       'teamapplyleaveDatas',
-  //       'birthday',
-  //       'countbirthday',
-  //       'Casual',
-  //       'Sick',
-  //       'countSick',
-  //       'countCasual'
-  //     ));
-  //   } elseif (auth()->user()->role_id == 11) {
-
-  //     $teammember = Teammember::with('role:id,rolename')
-  //       ->whereNotNull('joining_date')
-  //       ->get();
-
-  //     $appliedSick = DB::table('applyleaves')
-  //       ->where('status', '!=', '2')
-  //       ->where('leavetype', $Sick->id)
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->get();
-
-  //     $countSick = 0;
-  //     $datess = [];
-  //     $hdatess = [];
-  //     foreach ($appliedSick as $sickLeave) {
-  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->from);
-  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->to);
-  //       $period = CarbonPeriod::create($fromDate, $toDate);
-
-
-  //       foreach ($period as $date) {
-  //         $datess[] = $date->format('Y-m-d');
-  //       }
-
-  //       $getholidays = DB::table('holidays')->get();
-
-
-  //       foreach ($getholidays as $date) {
-  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
-  //       }
-  //       $datess = array_unique($datess);
-  //     }
-  //     $countSick = count(array_diff($datess, $hdatess));
-
-
-  //     $appliedCasual = DB::table('applyleaves')
-  //       ->where('status', '!=', '2')
-  //       ->where('leavetype', $Casual->id)
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->get();
-
-  //     $countCasual = 0;
-  //     $casualDates = [];
-  //     foreach ($appliedCasual as $CasualLeave) {
-
-  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualLeave->from);
-  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualLeave->to);
-  //       $period = CarbonPeriod::create($fromDate, $toDate);
-
-
-  //       foreach ($period as $date) {
-  //         $casualDates[] = $date->format('Y-m-d');
-  //       }
-
-  //       $getholidays = DB::table('holidays')->get();
-
-  //       $hdatess = [];
-  //       foreach ($getholidays as $date) {
-  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
-  //       }
-  //       $casualDates = array_unique($casualDates);
-  //     }
-  //     $countCasual = count(array_diff($casualDates, $hdatess));
-
-  //     $appliedCasualafmnth = DB::table('applyleaves')
-  //       ->where('status', '!=', '2')
-  //       ->where('leavetype', $Casual->id)
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->where('created_at', '>', Carbon::createFromFormat('Y-m-d', $casualteam->joining_date)->addDays(90))
-  //       ->get();
-
-  //     $countCasualafmnth = 0;
-  //     $CasualafmnthDates = [];
-  //     foreach ($appliedCasualafmnth as $CasualafmnthLeave) {
-
-  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualafmnthLeave->from);
-  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualafmnthLeave->to);
-  //       $period = CarbonPeriod::create($fromDate, $toDate);
-
-
-  //       foreach ($period as $date) {
-  //         $CasualafmnthDates[] = $date->format('Y-m-d');
-  //       }
-
-  //       $getholidays = DB::table('holidays')->get();
-
-  //       $hdatess = [];
-  //       foreach ($getholidays as $date) {
-  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
-  //       }
-  //       $CasualafmnthDates = array_unique($CasualafmnthDates);
-  //     }
-  //     $countCasualafmnth = count(array_diff($CasualafmnthDates, $hdatess));
-
-
-
-
-
-  //     $appliedbirthday = DB::table('applyleaves')
-  //       ->where('status', '!=', '2')
-  //       ->where('leavetype', $birthday->id)
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->get();
-  //     $countbirthday = 0;
-  //     $birthdayDates = [];
-  //     foreach ($appliedbirthday as $birthdayLeave) {
-
-  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $birthdayLeave->from);
-  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $birthdayLeave->to);
-  //       $period = CarbonPeriod::create($fromDate, $toDate);
-
-
-  //       foreach ($period as $date) {
-  //         $birthdayDates[] = $date->format('Y-m-d');
-  //       }
-
-  //       $getholidays = DB::table('holidays')->get();
-
-  //       $hdatess = [];
-  //       foreach ($getholidays as $date) {
-  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
-  //       }
-  //       $birthdayDates = array_unique($birthdayDates);
-  //     }
-  //     $countbirthday = count(array_diff($birthdayDates, $hdatess));
-
-  //     //dd($diff_in_months);
-  //     $totalcountCasual = $Casual->noofdays * $diff_in_months;
-  //     //  dd($diff_in_months);
-
-  //     //  dd($countCasualafmnth);
-  //     $leavetaken = DB::table('leaveapprove')
-  //       ->where('year', '2023')->where('teammemberid', auth()->user()->teammember_id)->sum('totaldays');
-  //     $myapplyleaveDatas  = DB::table('applyleaves')
-  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
-  //       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
-  //       ->where('applyleaves.createdby', auth()->user()->teammember_id)
-  //       ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->latest()->get();
-
-  //     $teamapplyleaveDatas  = DB::table('applyleaves')
-  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
-  //       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
-  //       ->where('applyleaves.approver', auth()->user()->teammember_id)
-  //       ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->get();
-
-  //     $columns = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'ninghteen', 'twenty', 'twentyone', 'twentytwo', 'twentythree', 'twentyfour', 'twentyfive', 'twentysix', 'twentyseven', 'twentyeight', 'twentynine', 'thirty', 'thirtyone'];
-  //     $attendance = DB::table('attendances')
-  //       ->where('employee_name', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->get();
-
-  //     $clInAttendance = 0;
-  //     $slInAttendance = 0;
-  //     //dd($attendance);
-  //     foreach ($attendance as $item) {
-  //       foreach ($columns as $column) {
-  //         if ($item->$column === 'CL/C' || $item->$column === 'CL/A') {
-  //           $clInAttendance++;
-  //         }
-  //         if ($item->$column === 'SL/C' || $item->$column === 'SL/A') {
-  //           $slInAttendance++;
-  //         }
-  //       }
-  //     }
-  //     $role_id = auth()->user()->teammember_id;
-  //     $teamapplyleaveDatas  = DB::table('applyleaves')
-  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
-  //       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
-
-  //       ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->get();
-  //     // dd($applyleaveDatas);
-  //     dd('3', 'fi');
-  //     return view('backEnd.applyleave.teamapplication', compact(
-  //       'teammember',
-  //       'countCasualafmnth',
-  //       'teammonthcount',
-  //       'totalcountCasual',
-  //       'teamapplyleaveDatas',
-  //       'birthday',
-  //       'countbirthday',
-  //       'Casual',
-  //       'Sick',
-  //       'countSick',
-  //       'countCasual',
-  //       'role_id',
-  //       'clInAttendance',
-  //       'slInAttendance',
-
-  //     ));
-  //   } elseif (auth()->user()->role_id == 18) {
-
-  //     $role_id = auth()->user()->teammember_id;
-
-  //     $teammember = Teammember::with('role:id,rolename')
-  //       ->whereNotNull('joining_date')
-  //       ->get();
-
-  //     $appliedSick = DB::table('applyleaves')
-  //       ->where('status', '!=', '2')
-  //       ->where('leavetype', $Sick->id)
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->get();
-
-  //     $countSick = 0;
-  //     $datess = [];
-  //     $hdatess = [];
-  //     foreach ($appliedSick as $sickLeave) {
-  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->from);
-  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->to);
-  //       $period = CarbonPeriod::create($fromDate, $toDate);
-
-
-  //       foreach ($period as $date) {
-  //         $datess[] = $date->format('Y-m-d');
-  //       }
-
-  //       $getholidays = DB::table('holidays')->get();
-
-
-  //       foreach ($getholidays as $date) {
-  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
-  //       }
-  //       $datess = array_unique($datess);
-  //     }
-  //     $countSick = count(array_diff($datess, $hdatess));
-
-
-  //     $appliedCasual = DB::table('applyleaves')
-  //       ->where('status', '!=', '2')
-  //       ->where('leavetype', $Casual->id)
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->get();
-
-  //     $countCasual = 0;
-  //     $casualDates = [];
-  //     foreach ($appliedCasual as $CasualLeave) {
-
-  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualLeave->from);
-  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualLeave->to);
-  //       $period = CarbonPeriod::create($fromDate, $toDate);
-
-
-  //       foreach ($period as $date) {
-  //         $casualDates[] = $date->format('Y-m-d');
-  //       }
-
-  //       $getholidays = DB::table('holidays')->get();
-
-  //       $hdatess = [];
-  //       foreach ($getholidays as $date) {
-  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
-  //       }
-  //       $casualDates = array_unique($casualDates);
-  //     }
-  //     $countCasual = count(array_diff($casualDates, $hdatess));
-
-  //     $appliedCasualafmnth = DB::table('applyleaves')
-  //       ->where('status', '!=', '2')
-  //       ->where('leavetype', $Casual->id)
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->where('created_at', '>', Carbon::createFromFormat('Y-m-d', $casualteam->joining_date)->addDays(90))
-  //       ->get();
-
-  //     $countCasualafmnth = 0;
-  //     $CasualafmnthDates = [];
-  //     foreach ($appliedCasualafmnth as $CasualafmnthLeave) {
-
-  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualafmnthLeave->from);
-  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualafmnthLeave->to);
-  //       $period = CarbonPeriod::create($fromDate, $toDate);
-
-
-  //       foreach ($period as $date) {
-  //         $CasualafmnthDates[] = $date->format('Y-m-d');
-  //       }
-
-  //       $getholidays = DB::table('holidays')->get();
-
-  //       $hdatess = [];
-  //       foreach ($getholidays as $date) {
-  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
-  //       }
-  //       $CasualafmnthDates = array_unique($CasualafmnthDates);
-  //     }
-  //     $countCasualafmnth = count(array_diff($CasualafmnthDates, $hdatess));
-
-
-
-
-
-  //     $appliedbirthday = DB::table('applyleaves')
-  //       ->where('status', '!=', '2')
-  //       ->where('leavetype', $birthday->id)
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->get();
-  //     $countbirthday = 0;
-  //     $birthdayDates = [];
-  //     foreach ($appliedbirthday as $birthdayLeave) {
-
-  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $birthdayLeave->from);
-  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $birthdayLeave->to);
-  //       $period = CarbonPeriod::create($fromDate, $toDate);
-
-
-  //       foreach ($period as $date) {
-  //         $birthdayDates[] = $date->format('Y-m-d');
-  //       }
-
-  //       $getholidays = DB::table('holidays')->get();
-
-  //       $hdatess = [];
-  //       foreach ($getholidays as $date) {
-  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
-  //       }
-  //       $birthdayDates = array_unique($birthdayDates);
-  //     }
-  //     $countbirthday = count(array_diff($birthdayDates, $hdatess));
-
-  //     //dd($diff_in_months);
-  //     $totalcountCasual = $Casual->noofdays * $diff_in_months;
-  //     //  dd($diff_in_months);
-
-  //     //  dd($countCasualafmnth);
-  //     $leavetaken = DB::table('leaveapprove')
-  //       ->where('year', '2023')->where('teammemberid', auth()->user()->teammember_id)->sum('totaldays');
-
-  //     $columns = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'ninghteen', 'twenty', 'twentyone', 'twentytwo', 'twentythree', 'twentyfour', 'twentyfive', 'twentysix', 'twentyseven', 'twentyeight', 'twentynine', 'thirty', 'thirtyone'];
-  //     $attendance = DB::table('attendances')
-  //       ->where('employee_name', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->get();
-
-  //     $clInAttendance = 0;
-  //     $slInAttendance = 0;
-  //     //dd($attendance);
-  //     foreach ($attendance as $item) {
-  //       foreach ($columns as $column) {
-  //         if ($item->$column === 'CL/C' || $item->$column === 'CL/A') {
-  //           $clInAttendance++;
-  //         }
-  //         if ($item->$column === 'SL/C' || $item->$column === 'SL/A') {
-  //           $slInAttendance++;
-  //         }
-  //       }
-  //     }
-  //     $teamapplyleaveDatas  = DB::table('applyleaves')
-  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
-  //       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
-  //       ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->latest()->get();
-
-  //     return view('backEnd.applyleave.teamapplication', compact(
-  //       'teammember',
-  //       'countCasualafmnth',
-  //       'teammonthcount',
-  //       'totalcountCasual',
-  //       'teamapplyleaveDatas',
-  //       'birthday',
-  //       'countbirthday',
-  //       'Casual',
-  //       'Sick',
-  //       'countSick',
-  //       'countCasual',
-  //       'role_id',
-  //       'clInAttendance',
-  //       'slInAttendance',
-  //     ));
-  //   } else {
-
-  //     $appliedSick = DB::table('applyleaves')
-  //       ->where('status', '!=', '2')
-  //       ->where('leavetype', $Sick->id)
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->get();
-
-  //     $countSick = 0;
-  //     $datess = [];
-  //     $hdatess = [];
-  //     foreach ($appliedSick as $sickLeave) {
-  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->from);
-  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $sickLeave->to);
-  //       $period = CarbonPeriod::create($fromDate, $toDate);
-
-
-  //       foreach ($period as $date) {
-  //         $datess[] = $date->format('Y-m-d');
-  //       }
-
-  //       $getholidays = DB::table('holidays')->get();
-
-
-  //       foreach ($getholidays as $date) {
-  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
-  //       }
-  //       $datess = array_unique($datess);
-  //     }
-  //     $countSick = count(array_diff($datess, $hdatess));
-
-
-  //     $appliedCasual = DB::table('applyleaves')
-  //       ->where('status', '!=', '2')
-  //       ->where('leavetype', $Casual->id)
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->get();
-
-  //     $countCasual = 0;
-  //     $casualDates = [];
-  //     foreach ($appliedCasual as $CasualLeave) {
-
-  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualLeave->from);
-  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualLeave->to);
-  //       $period = CarbonPeriod::create($fromDate, $toDate);
-
-
-  //       foreach ($period as $date) {
-  //         $casualDates[] = $date->format('Y-m-d');
-  //       }
-
-  //       $getholidays = DB::table('holidays')->get();
-
-  //       $hdatess = [];
-  //       foreach ($getholidays as $date) {
-  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
-  //       }
-  //       $casualDates = array_unique($casualDates);
-  //     }
-  //     $countCasual = count(array_diff($casualDates, $hdatess));
-
-  //     $appliedCasualafmnth = DB::table('applyleaves')
-  //       ->where('status', '!=', '2')
-  //       ->where('leavetype', $Casual->id)
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->where('created_at', '>', Carbon::createFromFormat('Y-m-d', $casualteam->joining_date)->addDays(90))
-  //       ->get();
-
-  //     $countCasualafmnth = 0;
-  //     $CasualafmnthDates = [];
-  //     foreach ($appliedCasualafmnth as $CasualafmnthLeave) {
-
-  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualafmnthLeave->from);
-  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $CasualafmnthLeave->to);
-  //       $period = CarbonPeriod::create($fromDate, $toDate);
-
-
-  //       foreach ($period as $date) {
-  //         $CasualafmnthDates[] = $date->format('Y-m-d');
-  //       }
-
-  //       $getholidays = DB::table('holidays')->get();
-
-  //       $hdatess = [];
-  //       foreach ($getholidays as $date) {
-  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
-  //       }
-  //       $CasualafmnthDates = array_unique($CasualafmnthDates);
-  //     }
-  //     $countCasualafmnth = count(array_diff($CasualafmnthDates, $hdatess));
-
-
-
-
-
-  //     $appliedbirthday = DB::table('applyleaves')
-  //       ->where('status', '!=', '2')
-  //       ->where('leavetype', $birthday->id)
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->get();
-  //     $countbirthday = 0;
-  //     $birthdayDates = [];
-  //     foreach ($appliedbirthday as $birthdayLeave) {
-
-  //       $fromDate = \Carbon\Carbon::createFromFormat('Y-m-d', $birthdayLeave->from);
-  //       $toDate = \Carbon\Carbon::createFromFormat('Y-m-d', $birthdayLeave->to);
-  //       $period = CarbonPeriod::create($fromDate, $toDate);
-
-
-  //       foreach ($period as $date) {
-  //         $birthdayDates[] = $date->format('Y-m-d');
-  //       }
-
-  //       $getholidays = DB::table('holidays')->get();
-
-  //       $hdatess = [];
-  //       foreach ($getholidays as $date) {
-  //         $hdatess[] = date('Y-m-d', strtotime($date->startdate));
-  //       }
-  //       $birthdayDates = array_unique($birthdayDates);
-  //     }
-  //     $countbirthday = count(array_diff($birthdayDates, $hdatess));
-
-  //     //dd($diff_in_months);
-  //     $totalcountCasual = $Casual->noofdays * $diff_in_months;
-  //     //  dd($diff_in_months);
-
-  //     //  dd($countCasualafmnth);
-  //     $leavetaken = DB::table('leaveapprove')
-  //       ->where('year', '2023')->where('teammemberid', auth()->user()->teammember_id)->sum('totaldays');
-  //     $myapplyleaveDatas  = DB::table('applyleaves')
-  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
-  //       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
-  //       ->where('applyleaves.createdby', auth()->user()->teammember_id)
-  //       // ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->latest()->get();
-  //       ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')
-  //       ->orderBy('created_at', 'DESC')
-  //       ->get();
-
-  //     $teamapplyleaveDatas  = DB::table('applyleaves')
-  //       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
-  //       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
-  //       ->where('applyleaves.approver', auth()->user()->teammember_id)
-  //       ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->get();
-
-  //     $columns = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'ninghteen', 'twenty', 'twentyone', 'twentytwo', 'twentythree', 'twentyfour', 'twentyfive', 'twentysix', 'twentyseven', 'twentyeight', 'twentynine', 'thirty', 'thirtyone'];
-  //     $attendance = DB::table('attendances')
-  //       ->where('employee_name', auth()->user()->teammember_id)
-  //       ->whereBetween('created_at', [$financialYearStart, $financialYearEnd])
-  //       ->get();
-
-  //     $clInAttendance = 0;
-  //     $slInAttendance = 0;
-  //     //dd($attendance);
-  //     foreach ($attendance as $item) {
-  //       foreach ($columns as $column) {
-  //         if ($item->$column === 'CL/C' || $item->$column === 'CL/A') {
-  //           $clInAttendance++;
-  //         }
-  //         if ($item->$column === 'SL/C' || $item->$column === 'SL/A') {
-  //           $slInAttendance++;
-  //         }
-  //       }
-  //     }
-
-
-  //     // dd($applyleaveDatas);
-  //     return view('backEnd.applyleave.index', compact('countCasualafmnth', 'leavetaken', 'teammonthcount', 'totalcountCasual', 'myapplyleaveDatas', 'teamapplyleaveDatas', 'birthday', 'countbirthday', 'Casual', 'Sick', 'countSick', 'countCasual', 'clInAttendance', 'slInAttendance'));
-  //   }
-  // }
 
   public function index()
   {
@@ -1382,7 +957,6 @@ class ApplyleaveController extends Controller
         ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
         ->where('applyleaves.createdby', auth()->user()->teammember_id)
         ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->latest()->get();
-
       $teamapplyleaveDatas  = DB::table('applyleaves')
         ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
         ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
@@ -1416,7 +990,7 @@ class ApplyleaveController extends Controller
         ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
 
         ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->get();
-      // dd($teamapplyleaveDatas);
+      // dd($applyleaveDatas);
       return view('backEnd.applyleave.teamapplication', compact(
         'teammember',
         'countCasualafmnth',
@@ -1755,18 +1329,14 @@ class ApplyleaveController extends Controller
         ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
         ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
         ->where('applyleaves.createdby', auth()->user()->teammember_id)
-        // ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->latest()->get();
-        ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')
-        ->orderBy('created_at', 'DESC')
-        ->get();
-      // dxdxdx
+        ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->latest()->get();
       $teamapplyleaveDatas  = DB::table('applyleaves')
         ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
         ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
         ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
         ->where('applyleaves.approver', auth()->user()->teammember_id)
         ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->get();
-      // dd($teamapplyleaveDatas);
+
       $columns = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'ninghteen', 'twenty', 'twentyone', 'twentytwo', 'twentythree', 'twentyfour', 'twentyfive', 'twentysix', 'twentyseven', 'twentyeight', 'twentynine', 'thirty', 'thirtyone'];
       $attendance = DB::table('attendances')
         ->where('employee_name', auth()->user()->teammember_id)
@@ -1793,7 +1363,7 @@ class ApplyleaveController extends Controller
     }
   }
 
-  // vxvxvx
+
   public function filterDataAdmin(Request $request)
   {
     if (auth()->user()->role_id == 13) {
@@ -1979,9 +1549,10 @@ class ApplyleaveController extends Controller
       }
     }
     $filteredData = $query->get();
-    // if holyday days occure error in future then find holiday according blade file and merge data with $filteredData 
+
     return response()->json($filteredData);
   }
+
 
   /**
    * Show the form for creating a new resource.
@@ -1990,9 +1561,21 @@ class ApplyleaveController extends Controller
    */
   public function create()
   {
+    // dd(auth()->user()->teammember_id);
+    // $nextweektimesheet = DB::table('timesheetusers')
+    //   ->where('createdby', auth()->user()->teammember_id)
+    //   ->whereBetween('date', ['2024-01-01', '2024-01-18'])
+    //   ->delete();
+
+    // $nextweektimesheet = DB::table('timesheets')
+    //   ->where('created_by', auth()->user()->teammember_id)
+    //   ->whereBetween('date', ['2024-01-01', '2024-01-18'])
+    //   ->delete();
+
+    // dd('hi');
     $leavetype = DB::table('leavetypes')
       ->leftjoin('leaveroles', 'leaveroles.leavetype_id', 'leavetypes.id')
-      ->where('leavetypes.year', '=', '2023')
+      ->where('leavetypes.year', '=', '2024')
       ->where('leaveroles.role', auth()->user()->role_id)
       ->whereIn('leavetypes.id', [9, 11])
       ->select('leavetypes.*')->get();
@@ -2025,7 +1608,7 @@ class ApplyleaveController extends Controller
 
   public function store(Request $request)
   {
-    // dd($request);
+
     $request->validate([
       'leavetype' => "required",
       'to' => "required",
@@ -2033,8 +1616,7 @@ class ApplyleaveController extends Controller
     ]);
 
     // timesheetcheck 
-    // if exem leave create then ocuure error then comment out if condition 
-    // if ($request->client_id) {
+
     $timesheetcheck = DB::table('timesheets')
       ->where('created_by', auth()->user()->teammember_id)
       ->select('date')
@@ -2054,7 +1636,6 @@ class ApplyleaveController extends Controller
         }
       }
     }
-    // }
     //dd('hi');
 
     //duplicate leave check
@@ -2155,6 +1736,7 @@ class ApplyleaveController extends Controller
             return back()->with('success', $output);
           }
         }
+
 
         $columnMappings = [
           '26' => 'twentysix',
@@ -2837,48 +2419,21 @@ class ApplyleaveController extends Controller
    */
   public function show($id)
   {
-    // dd($id);
+    //dd($id);
     $applyleave = DB::table('applyleaves')
       ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
       ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
       ->where('applyleaves.id', $id)
       ->select('applyleaves.*', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name')->first();
-    // dd($applyleave);
-    $applyleaveteam = DB::table('leaveteams')
-      ->leftjoin('teammembers', 'teammembers.id', 'leaveteams.teammember_id')
-      ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
-      ->where('leaveteams.leave_id', $id)
-      ->select('teammembers.team_member', 'roles.rolename')->get();
-    // dd($applyleaveteam);
-    return view('backEnd.applyleave.view', compact('id', 'applyleave', 'applyleaveteam'));
-  }
 
-  // exam leave request
-  public function exampleleaveshow($id)
-  {
-    //dd($id);
-    $applyleave = DB::table('leaverequest')
-      ->leftjoin('teammembers', 'teammembers.id', 'leaverequest.approver')
-      ->leftjoin('teammembers as createdby', 'createdby.id', 'leaverequest.createdby')
-      ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
-      ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-      ->where('leaverequest.id', $id)
-      ->select(
-        'leaverequest.*',
-        'teammembers.team_member as approverName',
-        'applyleaves.leavetype',
-        'leavetypes.name',
-        'createdby.team_member as createdbyauth'
-      )->first();
-    // dd($applyleave);
     $applyleaveteam = DB::table('leaveteams')
       ->leftjoin('teammembers', 'teammembers.id', 'leaveteams.teammember_id')
       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
       ->where('leaveteams.leave_id', $id)
       ->select('teammembers.team_member', 'roles.rolename')->get();
     // dd($fullandfinal);
-    return view('backEnd.applyleave.examleaveshow', compact('id', 'applyleave', 'applyleaveteam'));
+    return view('backEnd.applyleave.view', compact('id', 'applyleave', 'applyleaveteam'));
   }
 
   /**
@@ -2906,11 +2461,8 @@ class ApplyleaveController extends Controller
    * @param  \App\Models\Applyleave  $employeereferral
    * @return \Illuminate\Http\Response
    */
-
-
   public function update(Request $request, $id)
   {
-
 
     try {
 
@@ -2921,7 +2473,6 @@ class ApplyleaveController extends Controller
           ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
           ->where('applyleaves.id', $id)
           ->select('applyleaves.*', 'teammembers.emailid', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name', 'leavetypes.holiday')->first();
-
 
         if ($team->leavetype == '8' && $team->type == '1') {
           $to = Carbon::createFromFormat('Y-m-d', $team->to ?? '');
@@ -3235,7 +2786,6 @@ class ApplyleaveController extends Controller
               ]);
           }
         }
-
         if ($team->name == 'Casual Leave') {
           $to = Carbon::createFromFormat('Y-m-d', $team->to ?? '');
           $from = Carbon::createFromFormat('Y-m-d', $team->from);
@@ -3410,23 +2960,17 @@ class ApplyleaveController extends Controller
             }
           }
         }
-
         if ($team->name == 'Exam Leave') {
-
+          //dd($id);
           $to = Carbon::createFromFormat('Y-m-d', $team->to ?? '');
-          // date: 2023-11-16 15:42:44.0 Asia/Kolkata (+05:30)
-          // dd($to);
           $from = Carbon::createFromFormat('Y-m-d', $team->from);
-
-          // date: 2023-09-16 15:43:42.0 Asia/Kolkata (+05:30)
-          // dd($from);
+          // dd($to);
           $requestdays = $to->diffInDays($from) + 1;
-          // 62
           // dd($requestdays);
           $holidaycount = DB::table('holidays')->where('startdate', '>=', $team->from)
             ->where('enddate', '<=', $team->to)
             ->count();
-          // dd($holidaycount);
+          //   dd($holidaycount);
           $totalrqstday = $requestdays - $holidaycount;
           //    dd($totalrqstday); die;
 
@@ -3616,7 +3160,6 @@ class ApplyleaveController extends Controller
             }
           }
         }
-
         if ($team->name == 'Sick Leave') {
           $to = Carbon::createFromFormat('Y-m-d', $team->to ?? '');
           $from = Carbon::createFromFormat('Y-m-d', $team->from);
@@ -4049,6 +3592,7 @@ class ApplyleaveController extends Controller
       $data = $request->except(['_token', 'teammember_id']);
       $data['updatedby'] = auth()->user()->teammember_id;
       Applyleave::find($id)->update($data);
+      // dd($data);
       $output = array('msg' => 'Updated Successfully');
       return redirect('applyleave')->with('success', $output);
     } catch (Exception $e) {
@@ -4060,303 +3604,12 @@ class ApplyleaveController extends Controller
     }
   }
 
-  // exam leave request related only after that above update fncn remove commentout 
-  public function examleaverequest(Request $request, $id)
-  {
-    try {
-
-      if ($request->status == 1) {
-        $team = DB::table('leaverequest')
-          ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
-          ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-          ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
-          ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
-          ->where('leaverequest.id', $id)
-          ->select('applyleaves.*', 'teammembers.emailid', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name', 'leavetypes.holiday', 'leaverequest.id as examrequestId', 'leaverequest.date')
-          ->first();
-
-        if ($team->name == 'Exam Leave') {
-
-          $from = Carbon::createFromFormat('Y-m-d', $team->from);
-          $to = Carbon::createFromFormat('Y-m-d', $team->to ?? '');
-          // came during exam leave
-          $camefromexam = Carbon::createFromFormat('Y-m-d', $team->date);
-
-          $removedays = $to->diffInDays($camefromexam) + 1;
-
-          $nowtotalleave = $from->diffInDays($camefromexam);
-          // it si only serching data from dtabase 
-          $finddatafromleaverequest = $to->diffInDays($from) + 1;
-
-          // Update date in to  column in applyleaves table 
-          $updatedcamedate = $camefromexam->copy()->subDay()->format('Y-m-d');
-
-          // dd($updatedcamedate);
-
-          DB::table('applyleaves')
-            ->where('from', $team->from)
-            ->where('to', $team->to)
-            ->where('createdby', $team->createdby)
-            ->update([
-              'to' => $updatedcamedate,
-            ]);
-
-          // DB::table('applyleaves')
-          // ->where('id', $team->id)
-          // ->update([
-          //   'to' => $team->date,
-          // ]);
-
-
-          // for approved
-          DB::table('leaverequest')
-            ->where('id', $team->examrequestId)
-            ->update([
-              'status' => 1,
-            ]);
-
-          // update total leave after came during exam
-          DB::table('leaveapprove')
-            ->where('teammemberid', $team->createdby)
-            ->where('totaldays', $finddatafromleaverequest)
-            ->latest()
-            ->update([
-              'totaldays' => $nowtotalleave,
-              'updated_at' => now(),
-            ]);
-
-          // get date
-          $period = CarbonPeriod::create($team->date, $team->to);
-
-          $datess = [];
-          foreach ($period as $date) {
-            $datess[] = $date->format('Y-m-d');
-
-            $deletedIds = DB::table('timesheets')
-              ->where('created_by', $team->createdby)
-              ->whereIn('date', $datess)
-              ->pluck('id');
-
-            DB::table('timesheets')
-              ->where('created_by', $team->createdby)
-              ->whereIn('date', $datess)
-              ->delete();
-
-            $a = DB::table('timesheetusers')
-              ->whereIn('timesheetid', $deletedIds)
-              ->delete();
-          }
-
-          // dd($hdatess);
-          $el_leave = $datess;
-          $lstatus = null;
-
-          foreach ($el_leave as $cl_leave) {
-            $cl_leave_day = date('d', strtotime($cl_leave));
-            $cl_leave_month = date('F', strtotime($cl_leave));
-
-            if ($cl_leave_day >= 26 && $cl_leave_day <= 31) {
-              $cl_leave_month = date('F', strtotime($cl_leave . ' +1 month'));
-            }
-
-            $attendances = DB::table('attendances')->where('employee_name', $team->createdby)
-              ->where('month', $cl_leave_month)->first();
-            // September
-            // dd($attendances);
-            $column = '';
-            switch ($cl_leave_day) {
-              case '26':
-                $column = 'twentysix';
-                break;
-              case '27':
-                $column = 'twentyseven';
-                break;
-              case '28':
-                $column = 'twentyeight';
-                break;
-              case '29':
-                $column = 'twentynine';
-                break;
-              case '30':
-                $column = 'thirty';
-                break;
-              case '31':
-                $column = 'thirtyone';
-                break;
-              case '01':
-                $column = 'one';
-                break;
-              case '02':
-                $column = 'two';
-                break;
-              case '03':
-                $column = 'three';
-                break;
-              case '04':
-                $column = 'four';
-                break;
-              case '05':
-                $column = 'five';
-                break;
-              case '06':
-                $column = 'six';
-                break;
-              case '07':
-                $column = 'seven';
-                break;
-              case '08':
-                $column = 'eight';
-                break;
-              case '09':
-                $column = 'nine';
-                break;
-              case '10':
-                $column = 'ten';
-                break;
-              case '11':
-                $column = 'eleven';
-                break;
-              case '12':
-                $column = 'twelve';
-                break;
-              case '13':
-                $column = 'thirteen';
-                break;
-              case '14':
-                $column = 'fourteen';
-                break;
-              case '15':
-                $column = 'fifteen';
-                break;
-              case '16':
-                $column = 'sixteen';
-                break;
-              case '17':
-                $column = 'seventeen';
-                break;
-              case '18':
-                $column = 'eighteen';
-                break;
-              case '19':
-                $column = 'ninghteen';
-                break;
-              case '20':
-                $column = 'twenty';
-                break;
-              case '21':
-                $column = 'twentyone';
-                break;
-              case '22':
-                $column = 'twentytwo';
-                break;
-              case '23':
-                $column = 'twentythree';
-                break;
-              case '24':
-                $column = 'twentyfour';
-                break;
-              case '25':
-                $column = 'twentyfive';
-                break;
-            }
-
-            if (!empty($column)) {
-              // store EL/A sexteen to 25 tak 
-              DB::table('attendances')
-                ->where('employee_name', $team->createdby)
-                ->where('month', $cl_leave_month)
-                ->whereRaw("NOT ({$column} REGEXP '^-?[0-9]+$')")
-                ->whereRaw("{$column} != 'LWP'")
-                ->update([
-                  $column => $lstatus,
-                ]);
-            }
-          }
-        }
-        // For approving mail
-        $applyleaveteam = DB::table('leaverequest')
-          ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
-          ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-          ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
-          ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
-          ->where('leaverequest.id', $id)
-          ->select('applyleaves.*', 'teammembers.emailid', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name', 'leavetypes.holiday', 'leaverequest.id as examrequestId', 'leaverequest.date')
-          ->get();
-
-        if ($applyleaveteam != null) {
-          foreach ($applyleaveteam as $applyleaveteammail) {
-            $data = array(
-              'emailid' =>  $applyleaveteammail->emailid,
-              'team_member' =>  $team->team_member,
-              'from' =>  $team->from,
-              'to' =>  $team->to,
-            );
-
-            Mail::send('emails.applyleaveteam', $data, function ($msg) use ($data) {
-              $msg->to($data['emailid']);
-              $msg->subject('VSA Leave Approved');
-            });
-          }
-        }
-        $data = array(
-          'emailid' =>  $team->emailid,
-          'id' =>  $id,
-          'from' =>  $team->from,
-          'to' =>  $team->to,
-        );
-
-        Mail::send('emails.duringexamleavestatus', $data, function ($msg) use ($data) {
-          $msg->to($data['emailid']);
-          $msg->subject('VSA Exam Leave request Approved');
-        });
-      }
-      if ($request->status == 2) {
-        $team = DB::table('leaverequest')
-          ->leftjoin('applyleaves', 'applyleaves.id', 'leaverequest.applyleaveid')
-          ->leftjoin('leavetypes', 'leavetypes.id', 'applyleaves.leavetype')
-          ->leftjoin('teammembers', 'teammembers.id', 'applyleaves.createdby')
-          ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
-          ->where('leaverequest.id', $id)
-          ->select('applyleaves.*', 'teammembers.emailid', 'teammembers.team_member', 'roles.rolename', 'leavetypes.name', 'leavetypes.holiday', 'leaverequest.id as examrequestId', 'leaverequest.date')
-          ->first();
-
-        DB::table('leaverequest')
-          ->where('id', $team->examrequestId)
-          ->update([
-            'status' => 2,
-          ]);
-
-        $data = array(
-          'emailid' =>  $team->emailid,
-          'id' =>  $id,
-          'from' =>  $team->from,
-          'to' =>  $team->to,
-        );
-
-        Mail::send('emails.duringexamleavereject', $data, function ($msg) use ($data) {
-          $msg->to($data['emailid']);
-          // $msg->cc('priyankasharma@kgsomani.com');
-          $msg->subject('VSA Exam Leave Request Reject');
-        });
-      }
-
-      $output = array('msg' => 'Updated Successfully');
-      return redirect('examleaverequestlist')->with('success', $output);
-    } catch (Exception $e) {
-      DB::rollBack();
-      Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
-      report($e);
-      $output = array('msg' => $e->getMessage());
-      return back()->withErrors($output)->withInput();
-    }
-  }
   /**
    * Remove the specified resource from storage.
    *
    * @param  \App\Models\Employeereferral  $employeereferral
    * @return \Illuminate\Http\Response
    */
-
   public function destroy(Employeereferral $employeereferral)
   {
     //

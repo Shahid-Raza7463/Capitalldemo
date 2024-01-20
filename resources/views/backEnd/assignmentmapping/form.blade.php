@@ -34,7 +34,7 @@
     <div class="col-2">
         <div class="form-group">
             <label class="font-weight-600"> Period Start</label>
-            <input type="date" name="periodstart" id= "startDate" value="{{ $assignmentmapping->periodstart ?? '' }}"
+            <input type="date" name="periodstart" id="startDate" value="{{ $assignmentmapping->periodstart ?? '' }}"
                 class=" form-control" placeholder="Enter Period start">
         </div>
     </div>
@@ -164,8 +164,6 @@
             </select>
         </div>
     </div>
-
-
     <div class="col-6">
         <div class="form-group">
             <label class="font-weight-600">Other Partner </label>
@@ -235,7 +233,8 @@
         Back</a>
 
 </div>
-{{-- validation for comparision date --}}
+
+{{-- validation for date --}}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
@@ -257,7 +256,7 @@
     });
 </script>
 
-{{-- validation for block 4 digit to  year --}}
+{{-- validation for year --}}
 <script>
     $(document).ready(function() {
         $('#startDate').on('change', function() {
@@ -282,5 +281,14 @@
                 endclear.val('');
             }
         });
+    });
+</script>
+<script>
+    const dateInput = document.querySelector('.dateInput'); // Select the element with the class 'dateInput'
+    dateInput.addEventListener('change', function() {
+        const selectedDate = new Date(this.value);
+        const formattedDate =
+            `${selectedDate.getDate()}-${selectedDate.getMonth() + 1}-${selectedDate.getFullYear()}`;
+        this.value = formattedDate;
     });
 </script>

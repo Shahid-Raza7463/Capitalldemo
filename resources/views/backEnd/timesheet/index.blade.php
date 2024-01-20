@@ -11,7 +11,7 @@
 
     <!--Content Header (Page header)-->
     <div class="content-header row align-items-center m-0">
-        <nav aria-label="breadcrumb" class="col-sm-4 order-sm-last mb-3 mb-sm-0 p-0 ">
+        <nav aria-label="breadcrumb" class="col-sm-5 order-sm-last mb-3 mb-sm-0 p-0 ">
             {{-- <form method="post" class="row" action="{{ url('timesheet/search') }}" enctype="multipart/form-data">
                 @csrf
                 <div class="form-group col-md-4">
@@ -83,18 +83,17 @@
                     $froms = Carbon\Carbon::createFromFormat('Y-m-d', $currentdate);
                     $diff_in_daysformonday = $too->diffInDays($froms);
 
-                    //dd($diff_in_daysformonday);
+                    // dd($diff_in_days);
 
                 @endphp
-                @if ($diff_in_days > 20)
+                @if ($diff_in_days > 14)
                     @if ($timesheetrequest == null)
-                        <li class="breadcrumb-item">
-                            <a data-toggle="modal" data-target="#exampleModal21">Add Timesheet Request</a>
+                        <li class="breadcrumb-item"><a data-toggle="modal" data-target="#exampleModal21">Add Timesheet
+                                Request</a>
                         @else
                             @if ($currentdate < $timesheetrequest->validate)
-                        <li class="breadcrumb-item">
-                            <a href="{{ url('timesheet/create') }}">Add Timesheet</a>
-
+                        <li class="breadcrumb-item"><a class="btn btn-primary-soft btn-sm"
+                                href="{{ url('timesheet/create') }}">Add Timesheet</a>
                         </li>
                         @if (
                             (now()->isSunday() && now()->hour >= 18) ||
@@ -105,19 +104,25 @@
                                 now()->isFriday() ||
                                 (now()->isSaturday() && now()->hour <= 18))
                             @if ($timesheetcount >= 6)
-                                <li class="breadcrumb-item"><a
+                                <li class="breadcrumb-item"><a class="btn btn-primary-soft btn-sm"
                                         onclick="return confirm('Are you sure you want to submit this timesheet for last week?');"
                                         href="{{ url('timesheetsubmission') }}">Submit Timesheet for Week</a>
                                 </li>
                             @endif
                         @endif
-                    @else
+                        <!--<li class="breadcrumb-item"><a data-toggle="modal" data-target="#exampleModal1">Upload File</a></li>
+                    <li class="breadcrumb-item active">+</li> -->
+                    @elseif ($currentdate > $timesheetrequest->validate && $timesheetrequest->validate != null)
+                        <li class="breadcrumb-item"><a data-toggle="modal" data-target="#exampleModal21">Add Timesheet
+                                Request</a>
+                        @else
                         <li class="breadcrumb-item"><a data-toggle="modal" data-target="#exampleModal21">Requested Done</a>
                         </li>
                     @endif
                 @endif
             @elseif(15 < 16)
-                <li class="breadcrumb-item"><a href="{{ url('timesheet/create') }}">Add Timesheet @if ($timesheetcount < 7)
+                <li class="breadcrumb-item"><a class="btn btn-info-soft btn-sm" href="{{ url('timesheet/create') }}">Add
+                        Timesheet @if ($timesheetcount < 7)
                             for last week
                         @endif
                     </a>
@@ -132,16 +137,23 @@
                         now()->isFriday() ||
                         (now()->isSaturday() && now()->hour <= 18))
                     @if ($timesheetcount >= 6)
-                        <li class="breadcrumb-item"><a
+                        <li class="breadcrumb-item"><a class="btn btn-primary-soft btn-sm"
                                 onclick="return confirm('Are you sure you want to submit this timesheet for last week?');"
                                 href="{{ url('timesheetsubmission') }}">Submit Timesheet for Week</a>
                         </li>
                     @endif
                 @endif
+
+
+
+
+                <!-- <li class="breadcrumb-item"><a data-toggle="modal" data-target="#exampleModal1">Upload File</a></li>
+                                <li class="breadcrumb-item active">+</li> -->
                 @endif
+
             </ol>
         </nav>
-        <div class="col-sm-8 header-title p-0">
+        <div class="col-sm-7 header-title p-0">
             <div class="media">
                 <div class="header-icon text-success mr-3"><i class="typcn typcn-puzzle-outline"></i></div>
                 <div class="media-body">
@@ -172,15 +184,15 @@
                                             now()->isMonday() ||
                                             (now()->isTuesday() && now()->hour <= 18))
     <th><button type="submit"
-                                                                                                                                                                                                                                                                                                                                                                    onclick="return confirm('Are you sure you want to submit this item?');"
-                                                                                                                                                                                                                                                                                                                                                                     formaction="timesheetsubmits" class="btn btn-danger-soft btn-sm">Submit</button>
-                                                                                                                                                                                                                                                                                                                                                                     <input type="checkbox" id="chkAll">
-                                                                                                                                                                                                                                                                                                                                                                   <i class="os-icon os-icon-trash"></i></th>
+                                                    onclick="return confirm('Are you sure you want to submit this item?');"
+                                                     formaction="timesheetsubmits" class="btn btn-danger-soft btn-sm">Submit</button>
+                                                     <input type="checkbox" id="chkAll">
+                                                   <i class="os-icon os-icon-trash"></i></th>
     @endif -->
                                     <th>Status</th>
                                     <th>Date</th>
                                     <th>Day</th>
-                                    <th>Client Name</th>
+                                    <th>Client Nameaaa</th>
                                     <th>Assignment Name</th>
 
                                     <th>Work Item</th>
@@ -225,7 +237,7 @@
                                                 now()->isMonday() ||
                                                 (now()->isTuesday() && now()->hour <= 18))
     <td><input type="checkbox" name="ids[]" style="width: 18px;margin-left: 16px;"
-                                                                                                                                                                                                                                                                                                                                                                    class="selectbox" value="{{ $timeid->id }}"></td>
+                                                    class="selectbox" value="{{ $timeid->id }}"></td>
     @endif -->
                                         <td>
                                             @if ($client_id->status == 0)
@@ -316,18 +328,18 @@
 
 
                                             <td>{{ $total }}</td>
-
-                                            @if ($client_id->status == 0)
-                                                @if ($leavesWithinRange->isEmpty())
-                                                    <td> <a href="{{ url('/timesheet/destroy/' . $timesheetDatas->id) }}"
+                                            <td>
+                                                @if ($client_id->status == 0)
+                                                    @if ($leavesWithinRange->isEmpty())
+                                                        <a href="{{ url('/timesheet/destroy/' . $timesheetDatas->id) }}"
                                                             onclick="return confirm('Are you sure you want to delete this item?');"
                                                             class="btn btn-danger-soft btn-sm"><i
                                                                 class="far fa-trash-alt"></i></a>
+                                                    @endif
+                                                @else
+                                                    delete blocked
                                                 @endif
-                                                </td>
-                                            @else
-                                                <td>delete blocked</td>
-                                            @endif
+                                            </td>
                                     </tr>
                                 @endforeach
                             </tbody>

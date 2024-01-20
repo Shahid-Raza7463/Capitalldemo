@@ -8,7 +8,7 @@
 <p>Password : {{ $password ??''}}</p>
 <br>
 <p>If you experience any issues logging into your account, reach out to us at <a
-        href="mailto:it@capitall.io">it@capitall.io</a></p>
+        href="mailto:itsupport_delhi@vsa.co.in">itsupport_delhi@vsa.co.in</a></p>
 <br>
 <br>
 <p><b>Regards,<br>Team VSA</b></p>

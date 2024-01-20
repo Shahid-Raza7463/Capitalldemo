@@ -1,13 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
-
 use App\Models\Teammember;
 use App\Models\Appointmentletter;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use DB;
-
 class AppointmentletterController extends Controller
 {
     /**
@@ -15,50 +13,41 @@ class AppointmentletterController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function __construct()
+	   public function __construct()
     {
         $this->middleware('auth');
     }
     public function index()
-    {
-        if (auth()->user()->teammember_id == 343  || auth()->user()->teammember_id == 510) {
+   {
+		 if(auth()->user()->teammember_id == 343  || auth()->user()->teammember_id == 510){
             $appointmentletterDatas = DB::table('appointmentletters')
-                ->leftjoin('teammembers', 'teammembers.id', 'appointmentletters.teammember_id')
-                ->leftjoin('clients', 'clients.id', 'appointmentletters.client_id')
-                ->leftjoin('assignments', 'assignments.id', 'appointmentletters.assignment_id')
-                ->select(
-                    'appointmentletters.*',
-                    'teammembers.team_member',
-                    'clients.client_name',
-                    'assignments.assignment_name'
-                )->get();
-            return view('backEnd.appointmentletter.index', compact('appointmentletterDatas'));
-        } elseif (auth()->user()->role_id == 11 || auth()->user()->role_id == 16) {
-            $appointmentletterDatas = DB::table('appointmentletters')
-                ->leftjoin('teammembers', 'teammembers.id', 'appointmentletters.teammember_id')
-                ->leftjoin('clients', 'clients.id', 'appointmentletters.client_id')
-                ->leftjoin('assignments', 'assignments.id', 'appointmentletters.assignment_id')->select(
-                    'appointmentletters.*',
-                    'teammembers.team_member',
-                    'clients.client_name',
-                    'assignments.assignment_name'
-                )->get();
-            return view('backEnd.appointmentletter.index', compact('appointmentletterDatas'));
-        } else {
-            $appointmentletterDatas = DB::table('appointmentletters')
-                ->leftjoin('teammembers', 'teammembers.id', 'appointmentletters.teammember_id')
-                ->leftjoin('clients', 'clients.id', 'appointmentletters.client_id')
-                ->leftjoin('assignments', 'assignments.id', 'appointmentletters.assignment_id')
-                ->where('appointmentletters.teammember_id', auth()->user()->teammember_id)
-                ->select(
-                    'appointmentletters.*',
-                    'teammembers.team_member',
-                    'clients.client_name',
-                    'assignments.assignment_name'
-                )->get();
-            return view('backEnd.appointmentletter.index', compact('appointmentletterDatas'));
+            ->leftjoin('teammembers','teammembers.id','appointmentletters.teammember_id')
+            ->leftjoin('clients','clients.id','appointmentletters.client_id')
+            ->leftjoin('assignments','assignments.id','appointmentletters.assignment_id')
+            ->select('appointmentletters.*',
+            'teammembers.team_member','clients.client_name','assignments.assignment_name')->get();
+                 return view('backEnd.appointmentletter.index',compact('appointmentletterDatas'));
         }
+		 elseif(auth()->user()->role_id == 11 || auth()->user()->role_id == 16){
+         $appointmentletterDatas = DB::table('appointmentletters')
+        ->leftjoin('teammembers','teammembers.id','appointmentletters.teammember_id')
+        ->leftjoin('clients','clients.id','appointmentletters.client_id')
+        ->leftjoin('assignments','assignments.id','appointmentletters.assignment_id')->select('appointmentletters.*',
+        'teammembers.team_member','clients.client_name','assignments.assignment_name')->get();
+             return view('backEnd.appointmentletter.index',compact('appointmentletterDatas'));
     }
+		else
+		{
+			 $appointmentletterDatas = DB::table('appointmentletters')
+        ->leftjoin('teammembers','teammembers.id','appointmentletters.teammember_id')
+        ->leftjoin('clients','clients.id','appointmentletters.client_id')
+        ->leftjoin('assignments','assignments.id','appointmentletters.assignment_id')
+        ->where('appointmentletters.teammember_id',auth()->user()->teammember_id)
+                 ->select('appointmentletters.*',
+                 'teammembers.team_member','clients.client_name','assignments.assignment_name')->get();
+             return view('backEnd.appointmentletter.index',compact('appointmentletterDatas'));
+		}
+	}
     /**
      * Show the form for creating a new resource.
      *
@@ -66,8 +55,8 @@ class AppointmentletterController extends Controller
      */
     public function create()
     {
-        $teammember = Teammember::where('role_id', '=', 13)->with('title', 'role')->get();
-        return view('backEnd.appointmentletter.create', compact('teammember'));
+		  $teammember = Teammember::where('role_id','=',13)->with('title','role')->get();
+        return view('backEnd.appointmentletter.create',compact('teammember'));
     }
 
     /**
@@ -77,26 +66,29 @@ class AppointmentletterController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {
+    { 
         $request->validate([
             'Name' => "required",
         ]);
 
         try {
-            $data = $request->except(['_token']);
-            if ($request->hasFile('attachment')) {
-                $file = $request->file('attachment');
-                $destinationPath = 'backEnd/image/appointmentletter';
-                $name = $file->getClientOriginalName();
-                $s = $file->move($destinationPath, $name);
-                //  dd($s); die;
-                $data['attachment'] = $name;
+            $data=$request->except(['_token']);
+           if($request->hasFile('attachment'))
+            {
+                $file=$request->file('attachment');
+                    $destinationPath = 'backEnd/image/appointmentletter';
+                    $name = $file->getClientOriginalName();
+                   $s = $file->move($destinationPath, $name);
+                         //  dd($s); die;
+                         $data['attachment'] = $name;
+               
             }
             $data['createdby'] = auth()->user()->teammember_id;
             appointmentletter::Create($data);
-
+     
             $output = array('msg' => 'Create Successfully');
             return back()->with('success', $output);
+        
         } catch (Exception $e) {
             DB::rollBack();
             Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
@@ -104,7 +96,8 @@ class AppointmentletterController extends Controller
             $output = array('msg' => $e->getMessage());
             return back()->withErrors($output)->withInput();
         }
-    }
+    
+}
 
     /**
      * Display the specified resource.
@@ -125,9 +118,9 @@ class AppointmentletterController extends Controller
      */
     public function edit($id)
     {
-        $teammember = Teammember::where('role_id', '=', 13)->with('title', 'role')->get();
+		$teammember = Teammember::where('role_id','=',13)->with('title','role')->get();
         $appointmentletter = Appointmentletter::where('id', $id)->first();
-        return view('backEnd.appointmentletter.edit', compact('id', 'appointmentletter', 'teammember'));
+        return view('backEnd.appointmentletter.edit', compact('id','appointmentletter','teammember'));
     }
 
     /**
@@ -143,20 +136,22 @@ class AppointmentletterController extends Controller
             'Name' => "required",
         ]);
         try {
-            $data = $request->except(['_token']);
-            if ($request->hasFile('attachment')) {
-                $file = $request->file('attachment');
-                $destinationPath = 'backEnd/image/appointmentletter';
-                $name = $file->getClientOriginalName();
-                $s = $file->move($destinationPath, $name);
-                //  dd($s); die;
-                $data['attachment'] = $name;
+            $data=$request->except(['_token']);
+            if($request->hasFile('attachment'))
+            {
+                $file=$request->file('attachment');
+                    $destinationPath = 'backEnd/image/appointmentletter';
+                    $name = $file->getClientOriginalName();
+                   $s = $file->move($destinationPath, $name);
+                         //  dd($s); die;
+                         $data['attachment'] = $name;
+               
             }
             $data['updatedby'] = auth()->user()->teammember_id;
             Appointmentletter::find($id)->update($data);
             $output = array('msg' => 'Updated Successfully');
             return redirect('appointmentletter')->with('success', $output);
-        } catch (Exception $e) {
+    } catch (Exception $e) {
             DB::rollBack();
             Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
             report($e);

@@ -51,8 +51,7 @@
                     <p class="notification-text">You have 2 unread notification</p>
                     <div class="notification-list">
                         <div class="media new">
-                            <div class="img-user"><img src="{{ url('backEnd/dist/img/avatar.png') }}" alt="">
-                            </div>
+                            <div class="img-user"><img src="{{ url('backEnd/dist/img/avatar.png')}}" alt=""></div>
                             <div class="media-body">
                                 <h6>Congratulate <strong>Socrates Itumay</strong> for work anniversaries</h6>
                                 <span>Mar 15 12:32pm</span>
@@ -60,8 +59,7 @@
                         </div>
                         <!--/.media -->
                         <div class="media new">
-                            <div class="img-user online"><img src="{{ url('backEnd/dist/img/avatar2.png') }}"
-                                    alt="">
+                            <div class="img-user online"><img src="{{ url('backEnd/dist/img/avatar2.png')}}" alt="">
                             </div>
                             <div class="media-body">
                                 <h6><strong>Joyce Chua</strong> just created a new blog post</h6>
@@ -70,8 +68,7 @@
                         </div>
                         <!--/.media -->
                         <div class="media">
-                            <div class="img-user"><img src="{{ url('backEnd/dist/img/avatar3.png') }}" alt="">
-                            </div>
+                            <div class="img-user"><img src="{{ url('backEnd/dist/img/avatar3.png')}}" alt=""></div>
                             <div class="media-body">
                                 <h6><strong>Althea Cabardo</strong> just created a new blog post</h6>
                                 <span>Mar 13 02:56am</span>
@@ -79,8 +76,7 @@
                         </div>
                         <!--/.media -->
                         <div class="media">
-                            <div class="img-user"><img src="{{ url('backEnd/dist/img/avatar4.png') }}" alt="">
-                            </div>
+                            <div class="img-user"><img src="{{ url('backEnd/dist/img/avatar4.png')}}" alt=""></div>
                             <div class="media-body">
                                 <h6><strong>Adrian Monino</strong> added new comment on your photo</h6>
                                 <span>Mar 12 10:40pm</span>
@@ -105,7 +101,7 @@
                     </div>
                     <div class="user-header">
                         <div class="img-user">
-                            <img src="{{ url('backEnd/dist/img/avatar-1.jpg') }}" alt="">
+                            <img src="{{ url('backEnd/dist/img/avatar-1.jpg')}}" alt="">
                         </div><!-- img-user -->
                         <h6>Naeem Khan</h6>
                         <span><a href="cdn-cgi/l/email-protection.html" class="__cf_email__"
@@ -115,10 +111,8 @@
                     <a href="" class="dropdown-item"><i class="typcn typcn-edit"></i> Edit Profile</a>
                     <a href="" class="dropdown-item"><i class="typcn typcn-arrow-shuffle"></i> Activity Logs</a>
                     <a href="" class="dropdown-item"><i class="typcn typcn-cog-outline"></i> Account Settings</a>
-                    <a href="{{ route('logout') }}"
-                        onclick="event.preventDefault();
-document.getElementById('logout-form').submit();"
-                        class="dropdown-item"><i class="typcn typcn-key-outline"></i> Sign
+                    <a href="{{ route('logout') }}" onclick="event.preventDefault();
+document.getElementById('logout-form').submit();" class="dropdown-item"><i class="typcn typcn-key-outline"></i> Sign
                         Out</a>
                     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                         @csrf

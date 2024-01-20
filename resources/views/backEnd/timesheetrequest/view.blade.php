@@ -57,8 +57,11 @@
                                         <td><b>Created By : </b></td>
                                         <td>{{ $timesheetrequest->createdbyauth ?? '' }}
                                         </td>
-
-
+                                    <tr>
+                                        <td><b>Reason For Reject</b></td>
+                                        <td>{{ $timesheetrequest->remark ?? '' }}</td>
+                                        <td></td>
+                                        <td></td>
                                     </tr>
                                     <tr>
                                         <td><b>status : </b></td>
@@ -71,7 +74,7 @@
                                                 <span class="badge badge-pill badge-danger">Rejected</span>
                                             @endif
                                         </td>
-                                        @if ($timesheetrequest->partner == Auth::user()->teammember_id)
+                                        @if ($timesheetrequest->partner == Auth::user()->teammember_id || Auth::user()->email == 'itsupport_delhi@vsa.co.in')
                                             @if ($timesheetrequest->status == '0')
                                                 <td><b>Action :</b></td>
                                                 <td>

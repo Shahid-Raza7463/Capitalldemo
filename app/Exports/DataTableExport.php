@@ -37,12 +37,12 @@ class DataTableExport implements FromView, WithHeadings
         $teammemberIds = DB::table('teammembers')
             ->where('entity', $this->entityId)
             ->pluck('id');
-        //dd($teammemberIds);
+		//dd($teammemberIds);
 
         $payrollData = DB::table('employeepayrolls')
             ->whereIn('teammember_id', $teammemberIds)
-            ->where('level_three', 1)
-            ->where('send_to_bank', 0)
+            ->where('level_three',1)
+			->where('send_to_bank',0)
             ->select(
                 'id',
                 'teammember_id',
@@ -65,9 +65,9 @@ class DataTableExport implements FromView, WithHeadings
             )
             ->get();
 
-        // dd($payrollData);
+          // dd($payrollData);
 
-        /*if ($payrollData->isEmpty()) {
+           /*if ($payrollData->isEmpty()) {
             // Generate JavaScript code to display the alert message
             $alertScript = "<script>alert('Please approve the Sheet first.');</script>";
             
@@ -83,8 +83,9 @@ class DataTableExport implements FromView, WithHeadings
         else{
                     return $payrollData;
             }*/
-
-        return $payrollData;
+		
+		 return $payrollData;
+          
     }
 
     private function transformData($employeepayrollDatas)
@@ -96,27 +97,35 @@ class DataTableExport implements FromView, WithHeadings
             $employee = DB::table('teammembers')
                 ->where('id', $employeepayrollData->teammember_id)
                 ->first();
-
-            if ($employee->entity == "Capitall India Pvt. Ltd.") {
-                $trans_id = "885326";
-                $sender_acc_no = "080063700004260";
-            } elseif ($employee->entity == "GVRIKSH") {
-                $trans_id = "909135";
-                $sender_acc_no = "921010008132083";
-            } elseif ($employee->entity == "K G Somani & Co LLP") {
-                $trans_id = "1129";
-                $sender_acc_no = "235305001680";
-            } elseif ($employee->entity == "KGS Advisors LLP") {
-                $trans_id = "252";
-                $sender_acc_no = "235305001722";
-            }
-
+			
+				if( $employee->entity=="Capitall India Pvt. Ltd.")
+				{
+				$trans_id="885326";
+				$sender_acc_no="080063700004260";	
+				}
+				elseif( $employee->entity=="GVRIKSH")
+				{
+				$trans_id="909135";
+				$sender_acc_no="921010008132083";	
+				}
+			
+			elseif( $employee->entity=="K G Somani & Co LLP")
+				{
+				$trans_id="1129";
+				$sender_acc_no="235305001680";	
+				}
+			elseif( $employee->entity=="KGS Advisors LLP")
+				{
+				$trans_id="252";
+				$sender_acc_no="235305001722";	
+				}
+            
             $data[] = [
                 'Sr. No.' => ++$i,
-                'TRAN.ID' => $trans_id,
-                'Amount' => number_format(round($employeepayrollData->total_amount_to_paid), 0),
+                'TRAN.ID'=>$trans_id,
+                'Amount' =>number_format(round($employeepayrollData->total_amount_to_paid),0),
                 'SENDER ACCOUNT TYPE' => '10',
-                'SENDER ACCOUNT NO' => "'" . $sender_acc_no, // Prefix with a single quotation mark
+                'SENDER ACCOUNT NO' => "'".$sender_acc_no, // Prefix with a single quotation mark
                 'SENDER NAME' => $employee->entity,
                 'SMS EML' => 'EML',
                 'Detail' => 'accounts@kgsomani.com',

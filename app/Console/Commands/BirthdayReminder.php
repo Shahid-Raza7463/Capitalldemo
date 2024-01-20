@@ -6,7 +6,6 @@ use Illuminate\Console\Command;
 use DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
-
 class BirthdayReminder extends Command
 {
     /**
@@ -38,9 +37,8 @@ class BirthdayReminder extends Command
      *
      * @return int
      */
-
     public function handle()
-    {
+{
         $today = date('m-d');
 
         $birthdayDatas = DB::table('teammembers')
@@ -58,7 +56,9 @@ class BirthdayReminder extends Command
                 'gender' =>   $birthdayData->gender,
             );
             Mail::send('emails.happybirthday', $data, function ($msg) use ($data) {
-                $msg->to($data['email']);
+              $msg->to($data['email']);
+			//	$msg->to('sukhbahadur1993@gmail.com');
+            //$msg->cc('it@capitall.io');
                 $msg->subject($data['subject']);
             });
         }

@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers;
 
-
 use App\Models\Teammember;
 use App\Models\Timesheet;
+use App\Models\Assignmentmapping;
 use App\imports\Timesheetimport;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Client;
 use App\Models\Assignment;
-use App\Models\Assignmentmapping;
 use App\Models\Job;
 use App\Models\Timesheetusers;
 use Carbon\CarbonPeriod;
@@ -19,7 +18,6 @@ use Carbon\Carbon;
 use DB;
 use Excel;
 use DateTime;
-
 
 class TimesheetController extends Controller
 {
@@ -49,22 +47,7 @@ class TimesheetController extends Controller
   }
   public function full_list()
   {
-    $time =  DB::table('timesheets')->get();
-    foreach ($time as $value) {
-      //    dd(date('F', strtotime($value->date)));
-      DB::table('timesheets')->where('id', $value->id)->where('month', null)->update([
-        'month'         =>     date('F', strtotime($value->date)),
-      ]);
-    }
-    $time =  DB::table('timesheets')->where('month', 'November')
-      ->orwhere('month', 'October')->get();
-    // dd($time);
-    foreach ($time as $value) {
-      //  dd(date('Y-m-d', strtotime($value->date)));
-      DB::table('timesheets')->where('id', $value->id)->update([
-        'date'         =>     date('Y-m-d', strtotime($value->date)),
-      ]);
-    }
+
     $teammember = DB::table('teammembers')->leftjoin('roles', 'roles.id', 'teammembers.role_id')
       ->select('teammembers.id', 'teammembers.team_member', 'roles.rolename')
       ->where('teammembers.status', '1')->distinct()->get();
@@ -78,43 +61,10 @@ class TimesheetController extends Controller
     //dd($month);
     $timesheetData = DB::table('timesheets')
       ->leftjoin('teammembers', 'teammembers.id', 'timesheets.created_by')
-      ->select('timesheets.*', 'teammembers.team_member')->orderBy('id', 'DESC')->paginate(80);
+      ->select('timesheets.*', 'teammembers.team_member')->orderBy('id', 'DESC')->paginate(30);
     // dd($timesheetData);
     return view('backEnd.timesheet.hrindex', compact('timesheetData', 'teammember', 'month', 'years'));
   }
-  //! old code 
-  // // patner zxzx
-  // public function allteamsubmitted()
-  // {
-
-  //   $get_date = DB::table('timesheetreport')
-  //     ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-  //     ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-  //     // ->where('timesheetreport.teamid', auth()->user()->teammember_id)
-  //     ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-  //     ->latest()->get();
-
-  //   dd($get_date);
-  //   // adminfil
-  //   return view('backEnd.timesheet.myteamindex', compact('get_date'));
-  // }
-
-  // !old code 20-12-23
-  // public function allteamsubmitted()
-  // {
-
-  //   $get_date = DB::table('timesheetreport')
-  //     ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-  //     ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-  //     // ->where('timesheetreport.teamid', auth()->user()->teammember_id)
-  //     ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-  //     ->latest()->get();
-
-  //   // dd($get_date);
-  //   // adminfil
-  //   return view('backEnd.timesheet.myteamindex', compact('get_date'));
-  // }
-  // patner zxzx
   public function allteamsubmitted()
   {
 
@@ -151,157 +101,6 @@ class TimesheetController extends Controller
 
     return view('backEnd.timesheet.myteamindex', compact('get_date'));
   }
-
-
-  // public function timesheet_mylist()
-  // {
-  //   if (auth()->user()->role_id == 13) {
-  //     // die;
-  //     $client = Client::select('id', 'client_name')->get();
-  //     $getauth =  DB::table('timesheetusers')
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->where('status', '0')
-  //       ->orderby('id', 'desc')->first();
-
-  //     $dropdownYears = DB::table('timesheets')
-  //       ->where('created_by', auth()->user()->teammember_id)
-  //       ->select(DB::raw('YEAR(date) as year'))
-  //       ->distinct()->orderBy('year', 'DESC')->pluck('year');
-  //     $dropdownYears = DB::table('timesheets')
-  //       ->where('created_by', auth()->user()->teammember_id)
-  //       ->select(DB::raw('YEAR(date) as year'))
-  //       ->distinct()->orderBy('year', 'DESC')->pluck('year');
-
-
-  //     $dropdownMonths = DB::table('timesheets')
-  //       ->where('created_by', auth()->user()->teammember_id)
-  //       ->distinct()
-  //       ->pluck('month');
-
-  //     $partner = Teammember::where('role_id', '=', 11)->where('status', '=', 1)->with('title')->get();
-
-  //     $currentDate = now();
-
-
-  //     $month = $currentDate->format('F');
-  //     $year = $currentDate->format('Y');
-
-  //     $time =  DB::table('timesheets')->get();
-  //     foreach ($time as $value) {
-  //       //dd(date('F', strtotime($value->date)));
-  //       DB::table('timesheets')->where('id', $value->id)->update([
-  //         'month'         =>     date('F', strtotime($value->date)),
-  //       ]);
-  //     }
-  //     $teammember = DB::table('timesheets')
-  //       ->leftjoin('timesheetusers', 'timesheetusers.timesheetid', 'timesheets.id')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheets.created_by')
-  //       ->leftjoin('roles', 'roles.id', 'teammembers.role_id')
-  //       ->where('timesheetusers.partner', auth()->user()->teammember_id)
-  //       ->select('teammembers.id', 'teammembers.team_member', 'roles.rolename')->distinct()->get();
-  //     //  dd($teammember);
-  //     $month = DB::table('timesheets')
-  //       ->select('timesheets.month')->distinct()->get();
-
-  //     $result = DB::table('timesheetusers')->select(DB::raw('YEAR(date) as year'))
-  //       ->distinct()->orderBy('year', 'DESC')->limit(5)->get();
-  //     $years = $result->pluck('year');
-
-  //     $timesheetData = DB::table('timesheetusers')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-  //       ->where('timesheetusers.createdby', auth()->user()->teammember_id)
-  //       ->where('timesheetusers.status', 0)
-  //       ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'DESC')->paginate(200);
-  //     // dd($timesheetData);
-
-  //     // $timesheetData = DB::table('timesheetusers')
-  //     //   ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-  //     //   ->where('timesheetusers.createdby', auth()->user()->teammember_id)
-  //     //   ->where('timesheetusers.status', 1)
-  //     //   ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'DESC')->paginate(200);
-  //     // // dd($timesheetData);
-  //     $getauthh =  DB::table('timesheetusers')
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->orderby('id', 'desc')->first();
-  //     $timesheetrequest = DB::table('timesheetrequests')->where('createdby', auth()->user()->teammember_id)->orderBy('id', 'DESC')->first();
-
-  //     if ($getauthh  == null) {
-  //       return view('backEnd.timesheet.firstindex', compact('timesheetData', 'getauth', 'client', 'partner'));
-  //     } else {
-  //       // shahid
-  //       return view('backEnd.timesheet.index', compact('timesheetrequest', 'partner', 'client', 'getauth', 'dropdownMonths', 'timesheetData', 'year', 'dropdownYears', 'month', 'teammember', 'month', 'years'));
-  //     }
-  //   } else {
-
-  //     $dropdownYears = DB::table('timesheets')
-  //       ->where('created_by', auth()->user()->teammember_id)
-  //       ->select(DB::raw('YEAR(date) as year'))
-  //       ->distinct()->orderBy('year', 'DESC')->pluck('year');
-
-  //     $dropdownMonths = DB::table('timesheets')
-  //       ->where('created_by', auth()->user()->teammember_id)
-  //       ->distinct()
-  //       ->pluck('month');
-
-  //     $currentDate = now();
-
-
-  //     $month = $currentDate->format('F');
-  //     $year = $currentDate->format('Y');
-
-  //     $getauths =  DB::table('timesheetusers')
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->where('status', '1')
-  //       ->orderby('id', 'desc')->first();
-  //     if ($getauths != null) {
-  //       $getauth =  DB::table('timesheetusers')
-  //         ->where('createdby', auth()->user()->teammember_id)
-  //         ->where('status', '1')
-  //         ->orderby('id', 'desc')->first();
-  //       //dd($getauth);
-  //     } else {
-
-  //       $getauth =  DB::table('timesheetusers')
-  //         ->where('createdby', auth()->user()->teammember_id)
-  //         ->where('status', '0')
-  //         ->orderby('id', 'desc')->first();
-  //       //dd($getauth);
-  //     }
-
-  //     $getauthh =  DB::table('timesheetusers')
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->orderby('id', 'desc')->first();
-
-
-  //     $client = Client::select('id', 'client_name')->get();
-  //     $timesheetData = DB::table('timesheetusers')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-  //       ->where('timesheetusers.createdby', auth()->user()->teammember_id)
-  //       ->where('timesheetusers.status', 0)
-  //       //   ->where('timesheets.month', $month)
-  //       ->whereRaw('YEAR(timesheetusers.date) = ?', [$year])
-  //       ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'DESC')->get();
-  //     //  dd($timesheetData);
-  //     $partner = Teammember::where('role_id', '=', 11)->where('status', '=', 1)->with('title')->get();
-  //     $timesheetrequest = DB::table('timesheetrequests')->where('createdby', auth()->user()->teammember_id)->orderBy('id', 'DESC')->first();
-
-  //     if ($getauthh  == null) {
-  //       return view('backEnd.timesheet.firstindex', compact('timesheetData', 'getauth', 'client', 'partner'));
-  //     } else {
-  //       return view('backEnd.timesheet.index', compact(
-  //         'timesheetData',
-  //         'getauth',
-  //         'client',
-  //         'partner',
-  //         'timesheetrequest',
-  //         'dropdownYears',
-  //         'dropdownMonths',
-  //         'month',
-  //         'year',
-  //       ));
-  //     }
-  //   }
-  // }
 
   public function timesheet_mylist()
   {
@@ -395,14 +194,19 @@ class TimesheetController extends Controller
         ->where('createdby', auth()->user()->teammember_id)
         ->where('status', '1')
         ->orderby('id', 'desc')->first();
+      // dd($getauths);
+
       if ($getauths != null) {
+        // get current date
+        $currentDate = now();
+        $currentDateformate = $currentDate->format('Y-m-d');
         $getauth =  DB::table('timesheetusers')
           ->where('createdby', auth()->user()->teammember_id)
+          // stop future leave timesheet save wla 
+          ->where('date', '<=', $currentDateformate)
           ->where('status', '0')
           ->orderby('id', 'desc')->first();
-        //dd($getauth);
       } else {
-
         $getauth =  DB::table('timesheetusers')
           ->where('createdby', auth()->user()->teammember_id)
           ->where('status', '0')
@@ -421,10 +225,12 @@ class TimesheetController extends Controller
         ->where('timesheetusers.createdby', auth()->user()->teammember_id)
         ->where('timesheetusers.status', 0)
         //   ->where('timesheets.month', $month)
-        ->whereRaw('YEAR(timesheetusers.date) = ?', [$year])
+        //  ->whereRaw('YEAR(timesheetusers.date) = ?', [$year])
         ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'DESC')->get();
       //  dd($timesheetData);
-      $partner = Teammember::where('role_id', '=', 11)->where('status', '=', 1)->with('title')->get();
+      $partner = Teammember::whereNotIn('id', [887, 663])->where('role_id', '=', 13)->where('status', '=', 1)->with('title')
+        ->orderBy('team_member', 'asc')->get();
+
       $timesheetrequest = DB::table('timesheetrequests')->where('createdby', auth()->user()->teammember_id)->orderBy('id', 'DESC')->first();
 
       if ($getauthh  == null) {
@@ -444,62 +250,6 @@ class TimesheetController extends Controller
       }
     }
   }
-  // !old code 20-12-23
-  // public function timesheet_teamlist()
-  // {
-  //   if (auth()->user()->role_id == 13) {
-  //     // get all partner
-  //     $partner = Teammember::where('role_id', '=', 13)->where('status', '=', 1)->with('title')
-  //       ->orderBy('team_member', 'asc')->get();
-
-  //     $get_date = DB::table('timesheetreport')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-  //       ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-  //       ->where('timesheetreport.partnerid', auth()->user()->teammember_id)
-  //       ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-  //       ->latest()->get();
-  //   } else {
-  //     $partner = Teammember::where('role_id', '=', 13)->where('status', '=', 1)->with('title')
-  //       ->orderBy('team_member', 'asc')->get();
-  //     $get_date = DB::table('timesheetreport')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-  //       ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-  //       ->where('timesheetreport.teamid', auth()->user()->teammember_id)
-  //       ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-  //       ->latest()->get();
-  //   }
-
-  //   dd($get_date);
-  //   return view('backEnd.timesheet.myteamindex', compact('get_date', 'partner'));
-  // }
-  // public function timesheet_teamlist()
-  // {
-  //   if (auth()->user()->role_id == 13) {
-  //     // get all partner
-  //     $partner = Teammember::where('role_id', '=', 13)->where('status', '=', 1)->with('title')
-  //       ->orderBy('team_member', 'asc')->get();
-
-  //     $get_date = DB::table('timesheetreport')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-  //       ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-  //       ->where('timesheetreport.partnerid', auth()->user()->teammember_id)
-  //       ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-  //       ->latest()->get();
-  //   } else {
-  //     $partner = Teammember::where('role_id', '=', 13)->where('status', '=', 1)->with('title')
-  //       ->orderBy('team_member', 'asc')->get();
-  //     $get_date = DB::table('timesheetreport')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-  //       ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-  //       ->where('timesheetreport.teamid', auth()->user()->teammember_id)
-  //       ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-  //       ->latest()->get();
-  //   }
-
-  //   // dd($get_date);
-  //   return view('backEnd.timesheet.myteamindex', compact('get_date', 'partner'));
-  // }
-  // patner zxzx
   public function timesheet_teamlist()
   {
     if (auth()->user()->role_id == 13) {
@@ -514,6 +264,7 @@ class TimesheetController extends Controller
         ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
         ->latest()->get();
     } else {
+
       $partner = Teammember::where('role_id', '=', 13)->where('status', '=', 1)->with('title')
         ->orderBy('team_member', 'asc')->get();
       $get_datess = DB::table('timesheetreport')
@@ -523,30 +274,6 @@ class TimesheetController extends Controller
         ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
         ->latest()->get();
     }
-
-    // dd($get_datess);
-    // maping week wise data 
-    // $groupedData = $get_datess->groupBy('week')->map(function ($group) {
-    //   $firstItem = $group->first();
-
-    //   return (object)[
-    //     'id' => $firstItem->id,
-    //     'teamid' => $firstItem->teamid,
-    //     'week' => $firstItem->week,
-    //     'totaldays' => $group->sum('totaldays'),
-    //     'totaltime' => $group->sum('totaltime'),
-    //     'startdate' => $firstItem->startdate,
-    //     'enddate' => $firstItem->enddate,
-    //     'partnername' => $firstItem->partnername,
-    //     'created_at' => $firstItem->created_at,
-    //     'team_member' => $firstItem->team_member,
-    //     'partnerid' => $firstItem->partnerid,
-    //   ];
-    // });
-
-    // $get_date = collect($groupedData->values());
-
-
 
     $groupedData = $get_datess->groupBy(function ($item) {
       return $item->team_member . '|' . $item->week;
@@ -573,49 +300,18 @@ class TimesheetController extends Controller
 
     return view('backEnd.timesheet.myteamindex', compact('get_date', 'partner'));
   }
-  //! old code
-  // public function partnersubmitted()
-  // {
-  //   // get all partner
-  //   $partner = Teammember::where('role_id', '=', 13)->where('status', '=', 1)->with('title')
-  //     ->orderBy('team_member', 'asc')->get();
-  //   // dd($partner);
-  //   $get_date = DB::table('timesheetreport')
-  //     ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-  //     ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-  //     ->where('timesheetreport.teamid', auth()->user()->teammember_id)
-  //     ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-  //     ->latest()->get();
-  //   dd($get_date);
-  //   // shahid
-  //   return view('backEnd.timesheet.myteamindex', compact('get_date', 'partner'));
-  // }
-  //! old code 
-  // patner zxzx
-  // public function partnersubmitted()
-  // {
-  //   // dd(auth()->user());
-  //   $get_date = DB::table('timesheetreport')
-  //     ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-  //     ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-  //     ->where('timesheetreport.teamid', auth()->user()->teammember_id)
-  //     ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-  //     ->latest()->get();
-  //   dd($get_date);
-
-  //   return view('backEnd.timesheet.myteamindex', compact('get_date'));
-  // }
-
-  // Submmited timesheet data on patner
   public function partnersubmitted()
   {
-
+    // 844
+    // dd(auth()->user());
     $get_datess = DB::table('timesheetreport')
       ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
       ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
       ->where('timesheetreport.teamid', auth()->user()->teammember_id)
       ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
       ->latest()->get();
+    // dd($get_date);
+
 
     // maping week wise data 
     $groupedData = $get_datess->groupBy('week')->map(function ($group) {
@@ -640,615 +336,6 @@ class TimesheetController extends Controller
 
     return view('backEnd.timesheet.myteamindex', compact('get_date'));
   }
-  //! running code done 22-12-23
-
-  // public function filterDataAdmin(Request $request)
-  // {
-  //   // dd($request);
-  //   if (auth()->user()->role_id == 13) {
-  //     //shahidfil
-  //     $teamname = $request->input('teamname');
-  //     $start = $request->input('start');
-  //     $end = $request->input('end');
-  //     $totalhours = $request->input('totalhours');
-  //     $partnerId = $request->input('partnersearch');
-
-
-  //     $query = DB::table('timesheetreport')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-  //       ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-  //       ->where('timesheetreport.teamid', auth()->user()->teammember_id)
-  //       ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-  //       ->latest();
-
-  //     // teamname with othser field to  filter
-  //     if ($teamname) {
-  //       $query->where('timesheetreport.teamid', $teamname);
-  //     }
-
-  //     if ($teamname && $totalhours) {
-  //       $query->where(function ($q) use ($teamname, $totalhours) {
-  //         $q->where('timesheetreport.teamid', $teamname)
-  //           ->where('timesheetreport.totaltime', $totalhours);
-  //       });
-  //     }
-  //     if ($teamname && $partnerId) {
-  //       $query->where(function ($q) use ($teamname, $partnerId) {
-  //         $q->where('timesheetreport.teamid', $teamname)
-  //           ->where('timesheetreport.partnerid', $partnerId);
-  //       });
-  //     }
-
-  //     // patner or othse one data
-  //     if ($partnerId) {
-  //       $query->where('timesheetreport.partnerid', $partnerId);
-  //     }
-
-  //     if ($partnerId && $totalhours) {
-  //       $query->where(function ($q) use ($partnerId, $totalhours) {
-  //         $q->where('timesheetreport.partnerid', $partnerId)
-  //           ->where('timesheetreport.totaltime', $totalhours);
-  //       });
-  //     }
-
-  //     // total hour wise  wise or othser data
-  //     if ($totalhours) {
-  //       $query->where('timesheetreport.totaltime', $totalhours);
-  //     }
-  //     //! end date 
-  //     if ($start && $end) {
-  //       $query->where(function ($query) use ($start, $end) {
-  //         $query->whereBetween('timesheetreport.startdate', [$start, $end])
-  //           ->orWhereBetween('timesheetreport.enddate', [$start, $end])
-  //           ->orWhere(function ($query) use ($start, $end) {
-  //             $query->where('timesheetreport.startdate', '<=', $start)
-  //               ->where('timesheetreport.enddate', '>=', $end);
-  //           });
-  //       });
-  //     }
-  //   } else {
-
-  //     $teamname = $request->input('teamname');
-  //     $start = $request->input('start');
-  //     $end = $request->input('end');
-  //     $totalhours = $request->input('totalhours');
-  //     $partnerId = $request->input('partnersearch');
-
-
-  //     $query = DB::table('timesheetreport')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-  //       ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-  //       ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-  //       ->latest();
-
-  //     // teamname with othser field to  filter
-  //     if ($teamname) {
-  //       $query->where('timesheetreport.teamid', $teamname);
-  //     }
-
-  //     if ($teamname && $totalhours) {
-  //       $query->where(function ($q) use ($teamname, $totalhours) {
-  //         $q->where('timesheetreport.teamid', $teamname)
-  //           ->where('timesheetreport.totaltime', $totalhours);
-  //       });
-  //     }
-  //     if ($teamname && $partnerId) {
-  //       $query->where(function ($q) use ($teamname, $partnerId) {
-  //         $q->where('timesheetreport.teamid', $teamname)
-  //           ->where('timesheetreport.partnerid', $partnerId);
-  //       });
-  //     }
-
-  //     // patner or othse one data
-  //     if ($partnerId) {
-  //       $query->where('timesheetreport.partnerid', $partnerId);
-  //     }
-
-  //     if ($partnerId && $totalhours) {
-  //       $query->where(function ($q) use ($partnerId, $totalhours) {
-  //         $q->where('timesheetreport.partnerid', $partnerId)
-  //           ->where('timesheetreport.totaltime', $totalhours);
-  //       });
-  //     }
-
-  //     // total hour wise  wise or othser data
-  //     if ($totalhours) {
-  //       $query->where('timesheetreport.totaltime', $totalhours);
-  //     }
-  //     //! end date 
-  //     if ($start && $end) {
-  //       $query->where(function ($query) use ($start, $end) {
-  //         $query->whereBetween('timesheetreport.startdate', [$start, $end])
-  //           ->orWhereBetween('timesheetreport.enddate', [$start, $end])
-  //           ->orWhere(function ($query) use ($start, $end) {
-  //             $query->where('timesheetreport.startdate', '<=', $start)
-  //               ->where('timesheetreport.enddate', '>=', $end);
-  //           });
-  //       });
-  //     }
-  //   }
-  //   $filteredData = $query->get();
-
-  //   return response()->json($filteredData);
-  // }
-
-  // it is implemented submitte timesheet tab on admin and patner 
-  public function filterDataAdmin(Request $request)
-  {
-
-    // for patner 
-    if (auth()->user()->role_id == 13) {
-
-      $teamname = $request->input('teamname');
-      $start = $request->input('start');
-      $end = $request->input('end');
-      $totalhours = $request->input('totalhours');
-      $partnerId = $request->input('partnersearch');
-
-      // submitted teamtimesheet tab on patner then use this below query 
-
-      // $query = DB::table('timesheetreport')
-      //   ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-      //   ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-      //   ->where('timesheetreport.partnerid', auth()->user()->teammember_id)
-      //   ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-      //   ->latest();
-
-      // submitted timesheet tab on patner 
-      $query = DB::table('timesheetreport')
-        ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-        ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-        ->where('timesheetreport.teamid', auth()->user()->teammember_id)
-        ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-        ->latest();
-
-      // teamname with othser field to  filter
-      if ($teamname) {
-        $query->where('timesheetreport.teamid', $teamname);
-      }
-
-      if ($teamname && $totalhours) {
-        $query->where(function ($q) use ($teamname, $totalhours) {
-          $q->where('timesheetreport.teamid', $teamname)
-            ->where('timesheetreport.totaltime', $totalhours);
-        });
-      }
-      if ($teamname && $partnerId) {
-        $query->where(function ($q) use ($teamname, $partnerId) {
-          $q->where('timesheetreport.teamid', $teamname)
-            ->where('timesheetreport.partnerid', $partnerId);
-        });
-      }
-
-      // patner or othse one data
-      if ($partnerId) {
-        $query->where('timesheetreport.partnerid', $partnerId);
-      }
-
-      if ($partnerId && $totalhours) {
-        $query->where(function ($q) use ($partnerId, $totalhours) {
-          $q->where('timesheetreport.partnerid', $partnerId)
-            ->where('timesheetreport.totaltime', $totalhours);
-        });
-      }
-
-      // total hour wise  wise or othser data
-      if ($totalhours) {
-        $query->where('timesheetreport.totaltime', $totalhours);
-      }
-      //! end date 
-      if ($start && $end) {
-        $query->where(function ($query) use ($start, $end) {
-          $query->whereBetween('timesheetreport.startdate', [$start, $end])
-            ->orWhereBetween('timesheetreport.enddate', [$start, $end])
-            ->orWhere(function ($query) use ($start, $end) {
-              $query->where('timesheetreport.startdate', '<=', $start)
-                ->where('timesheetreport.enddate', '>=', $end);
-            });
-        });
-      }
-    }
-    // for Admin 
-    else {
-      // dd($request);
-
-      $teamname = $request->input('teamname');
-      $start = $request->input('start');
-      $end = $request->input('end');
-      $totalhours = $request->input('totalhours');
-      $partnerId = $request->input('partnersearch');
-
-
-      $query = DB::table('timesheetreport')
-        ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-        ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-        ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-        ->latest();
-
-      // teamname with othser field to  filter
-      if ($teamname) {
-        $query->where('timesheetreport.teamid', $teamname);
-      }
-
-      if ($teamname && $totalhours) {
-        $query->where(function ($q) use ($teamname, $totalhours) {
-          $q->where('timesheetreport.teamid', $teamname)
-            ->where('timesheetreport.totaltime', $totalhours);
-        });
-      }
-      if ($teamname && $partnerId) {
-        $query->where(function ($q) use ($teamname, $partnerId) {
-          $q->where('timesheetreport.teamid', $teamname)
-            ->where('timesheetreport.partnerid', $partnerId);
-        });
-      }
-
-      // patner or othse one data
-      if ($partnerId) {
-        $query->where('timesheetreport.partnerid', $partnerId);
-      }
-
-      if ($partnerId && $totalhours) {
-        $query->where(function ($q) use ($partnerId, $totalhours) {
-          $q->where('timesheetreport.partnerid', $partnerId)
-            ->where('timesheetreport.totaltime', $totalhours);
-        });
-      }
-
-      // total hour wise  wise or othser data
-      if ($totalhours) {
-        $query->where('timesheetreport.totaltime', $totalhours);
-      }
-      //! end date 
-      if ($start && $end) {
-        $query->where(function ($query) use ($start, $end) {
-          $query->whereBetween('timesheetreport.startdate', [$start, $end])
-            ->orWhereBetween('timesheetreport.enddate', [$start, $end])
-            ->orWhere(function ($query) use ($start, $end) {
-              $query->where('timesheetreport.startdate', '<=', $start)
-                ->where('timesheetreport.enddate', '>=', $end);
-            });
-        });
-      }
-    }
-    $filteredDataaa = $query->get();
-
-    // maping double date ************
-    $groupedData = $filteredDataaa->groupBy(function ($item) {
-      return $item->team_member . '|' . $item->week;
-    })->map(function ($group) {
-      $firstItem = $group->first();
-
-      return (object)[
-        'id' => $firstItem->id,
-        'teamid' => $firstItem->teamid,
-        'week' => $firstItem->week,
-        'totaldays' => $group->sum('totaldays'),
-        'totaltime' => $group->sum('totaltime'),
-        'startdate' => $firstItem->startdate,
-        'enddate' => $firstItem->enddate,
-        'partnername' => $firstItem->partnername,
-        'created_at' => $firstItem->created_at,
-        'team_member' => $firstItem->team_member,
-        'partnerid' => $firstItem->partnerid,
-      ];
-    });
-
-
-    $filteredData = collect($groupedData->values());
-    // dd($filteredData);
-    return response()->json($filteredData);
-  }
-
-
-  //! old code 
-  // public function weeklylist(Request $request)
-  // {
-  //   if (auth()->user()->role_id == 13) {
-
-  //     $date = DB::table('timesheetreport')->where('id', $request->id)->first();
-  //     // dd($date);
-  //     $timesheetData = DB::table('timesheetusers')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-  //       ->where('timesheetusers.createdby', $request->teamid)
-  //       ->where('timesheetusers.partner', $request->partnerid)
-  //       ->where('timesheetusers.status', 1)
-  //       ->where('timesheetusers.date', '>=', $date->startdate)
-  //       //->where('timesheetusers.date', $date->enddate)
-  //       ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->paginate(10);
-  //     // dd($timesheetData);
-  //   } else {
-  //     $date = DB::table('timesheetreport')->where('id', $request->id)->first();
-  //     // dd($date);
-  //     $timesheetData = DB::table('timesheetusers')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-  //       ->where('timesheetusers.createdby', $request->teamid)
-  //       ->where('timesheetusers.partner', $request->partnerid)
-  //       ->where('timesheetusers.status', 1)
-  //       ->where('timesheetusers.date', '>=', $date->startdate)
-  //       ->where('timesheetusers.date', '<=', $date->enddate)
-  //       ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
-  //   }
-  //   // dd($timesheetData);
-  //   return view('backEnd.timesheet.weeklylist', compact('timesheetData'));
-  // }
-
-  // public function weeklylist(Request $request)
-  // {
-  //   dd($request);
-  //   if (auth()->user()->role_id == 13) {
-
-  //     $date = DB::table('timesheetreport')->where('id', $request->id)->first();
-  //     // dd($date);
-  //     // $timesheetData = DB::table('timesheetusers')
-  //     //   ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-  //     //   ->where('timesheetusers.createdby', $request->teamid)
-  //     //   ->where('timesheetusers.partner', $request->partnerid)
-  //     //   ->where('timesheetusers.status', 1)
-  //     //   ->where('timesheetusers.date', '>=', $date->startdate)
-  //     //   //->where('timesheetusers.date', $date->enddate)
-  //     //   ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->paginate(10);
-  //     // // dd($timesheetData);
-  //     // $timesheetData = DB::table('timesheetusers')
-  //     //   ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-  //     //   ->where('timesheetusers.createdby', $request->teamid)
-  //     //   ->where('timesheetusers.partner', $request->partnerid)
-  //     //   //   ->where('timesheetusers.status', 1)
-  //     //   ->whereIn('timesheetusers.status', [1, 2, 3])
-  //     //   ->where('timesheetusers.date', '>=', $date->startdate)
-  //     //   //-      ->where('timesheetusers.date', '<=', $date->enddate)
-  //     //   ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->paginate(10);
-  //     // // dd($timesheetData);
-
-  //     $timesheetData = DB::table('timesheetusers')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-  //       ->where('timesheetusers.createdby', $request->teamid)
-  //       ->where('timesheetusers.partner', $request->partnerid)
-  //       // ->where('timesheetusers.status', 1)
-  //       ->whereIn('timesheetusers.status', [1, 2, 3])
-  //       ->where('timesheetusers.date', '>=', $date->startdate)
-  //       ->where('timesheetusers.date', '<=', $date->enddate)
-  //       ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
-  //   } else {
-  //     // edit timesheet
-  //     // dd(auth()->user());
-  //     $date = DB::table('timesheetreport')->where('id', $request->id)->first();
-  //     // dd($date);
-  //     // $timesheetData = DB::table('timesheetusers')
-  //     //   ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-  //     //   ->where('timesheetusers.createdby', $request->teamid)
-  //     //   ->where('timesheetusers.partner', $request->partnerid)
-  //     //   ->where('timesheetusers.status', 1)
-  //     //   ->where('timesheetusers.date', '>=', $date->startdate)
-  //     //   ->where('timesheetusers.date', '<=', $date->enddate)
-  //     //   ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
-  //     $timesheetData = DB::table('timesheetusers')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-  //       ->where('timesheetusers.createdby', $request->teamid)
-  //       ->where('timesheetusers.partner', $request->partnerid)
-  //       // ->where('timesheetusers.status', 1)
-  //       ->whereIn('timesheetusers.status', [1, 2, 3])
-  //       ->where('timesheetusers.date', '>=', $date->startdate)
-  //       ->where('timesheetusers.date', '<=', $date->enddate)
-  //       ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
-  //   }
-  //   // dd($timesheetData);
-  //   return view('backEnd.timesheet.weeklylist', compact('timesheetData'));
-  // }
-
-  // patner zxzx
-  public function weeklylist(Request $request)
-  {
-    // dd($request);
-    if (auth()->user()->role_id == 13) {
-
-      $date = DB::table('timesheetreport')->where('id', $request->id)->first();
-      // dd($date);
-      // $timesheetData = DB::table('timesheetusers')
-      //   ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-      //   ->where('timesheetusers.createdby', $request->teamid)
-      //   ->where('timesheetusers.partner', $request->partnerid)
-      //   ->where('timesheetusers.status', 1)
-      //   ->where('timesheetusers.date', '>=', $date->startdate)
-      //   //->where('timesheetusers.date', $date->enddate)
-      //   ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->paginate(10);
-      // // dd($timesheetData);
-      // $timesheetData = DB::table('timesheetusers')
-      //   ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-      //   ->where('timesheetusers.createdby', $request->teamid)
-      //   ->where('timesheetusers.partner', $request->partnerid)
-      //   //   ->where('timesheetusers.status', 1)
-      //   ->whereIn('timesheetusers.status', [1, 2, 3])
-      //   ->where('timesheetusers.date', '>=', $date->startdate)
-      //   //-      ->where('timesheetusers.date', '<=', $date->enddate)
-      //   ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->paginate(10);
-      // // dd($timesheetData);
-
-      $timesheetData = DB::table('timesheetusers')
-        ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-        ->where('timesheetusers.createdby', $request->teamid)
-        // i have removed below line 
-        // ->where('timesheetusers.partner', $request->partnerid)
-        // ->where('timesheetusers.status', 1)
-        ->whereIn('timesheetusers.status', [1, 2, 3])
-        ->where('timesheetusers.date', '>=', $date->startdate)
-        ->where('timesheetusers.date', '<=', $date->enddate)
-        ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
-    } else {
-      // edit timesheet
-      // dd(auth()->user());
-      $date = DB::table('timesheetreport')->where('id', $request->id)->first();
-      // dd($date);
-      // $timesheetData = DB::table('timesheetusers')
-      //   ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-      //   ->where('timesheetusers.createdby', $request->teamid)
-      //   ->where('timesheetusers.partner', $request->partnerid)
-      //   ->where('timesheetusers.status', 1)
-      //   ->where('timesheetusers.date', '>=', $date->startdate)
-      //   ->where('timesheetusers.date', '<=', $date->enddate)
-      //   ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
-      $timesheetData = DB::table('timesheetusers')
-        ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-        ->where('timesheetusers.createdby', $request->teamid)
-        // i have removed below line 
-        // ->where('timesheetusers.partner', $request->partnerid)
-        // ->where('timesheetusers.status', 1)
-        ->whereIn('timesheetusers.status', [1, 2, 3])
-        ->where('timesheetusers.date', '>=', $date->startdate)
-        ->where('timesheetusers.date', '<=', $date->enddate)
-        ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
-    }
-    // dd($timesheetData);
-    return view('backEnd.timesheet.weeklylist', compact('timesheetData'));
-  }
-
-
-
-
-
-
-
-
-  //* admin and partner is done 
-  // public function rejectedlist(Request $request)
-  // {
-  //   // dd(auth()->user());
-  //   if (auth()->user()->role_id == 13) {
-  //     $timesheetData = DB::table('timesheetusers')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-  //       ->where('timesheetusers.createdby', auth()->user()->teammember_id)
-  //       ->where('timesheetusers.status', 2)
-  //       ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->paginate(10);
-  //     // dd($timesheetData);
-  //   } else {
-
-  //     $timesheetData = DB::table('timesheetusers')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-  //       // ->where('timesheetusers.createdby', $request->teamid)
-  //       // ->where('timesheetusers.partner', $request->partnerid)
-  //       ->where('timesheetusers.status', 2)
-  //       // ->whereIn('timesheetusers.status', [1, 2])
-  //       // ->where('timesheetusers.date', '>=', $date->startdate)
-  //       // ->where('timesheetusers.date', '<=', $date->enddate)
-  //       ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
-  //   }
-  //   // dd($timesheetData);
-  //   return view('backEnd.timesheet.rejectedlist', compact('timesheetData'));
-  // }
-
-
-  //! running code done 
-  // public function filterweeklylist(Request $request)
-  // {
-
-  //   if (auth()->user()->role_id == 13) {
-  //     //shahidfil
-  //     $clientname = $request->input('clientname');
-  //     $assignmentname = $request->input('assignmentname');
-
-
-  //     $query = DB::table('timesheetreport')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
-  //       ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
-  //       ->where('timesheetreport.teamid', auth()->user()->teammember_id)
-  //       ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
-  //       ->latest();
-
-  //     // teamname with othser field to  filter
-  //     if ($clientname) {
-  //       $query->where('timesheetreport.teamid', $clientname);
-  //     }
-
-  //     if ($clientname && $assignmentname) {
-  //       $query->where(function ($q) use ($clientname, $assignmentname) {
-  //         $q->where('timesheetreport.teamid', $clientname)
-  //           ->where('timesheetreport.totaltime', $assignmentname);
-  //       });
-  //     }
-
-  //     // patner or othse one data
-  //     if ($assignmentname) {
-  //       $query->where('timesheetreport.partnerid', $assignmentname);
-  //     }
-  //   } else {
-  //     // admin dashboard
-  //     $clientname = $request->input('clientname');
-  //     $assignmentname = $request->input('assignmentname');
-
-  //     $date = DB::table('timesheetreport')->where('id', $request->id)->first();
-
-  //     $query = DB::table('timesheetusers')
-  //       ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-  //       ->where('timesheetusers.createdby', $request->teamid)
-  //       ->where('timesheetusers.partner', $request->partnerid)
-  //       ->where('timesheetusers.status', 1)
-  //       ->where('timesheetusers.date', '>=', $date->startdate)
-  //       ->where('timesheetusers.date', '<=', $date->enddate)
-  //       ->select('timesheetusers.*', 'teammembers.team_member');
-
-  //     // teamname with othser field to  filter
-  //     if ($clientname) {
-  //       $query->where('timesheetreport.teamid', $clientname);
-  //     }
-
-  //     if ($clientname && $assignmentname) {
-  //       $query->where(function ($q) use ($clientname, $assignmentname) {
-  //         $q->where('timesheetreport.teamid', $clientname)
-  //           ->where('timesheetreport.totaltime', $assignmentname);
-  //       });
-  //     }
-
-  //     // patner or othse one data
-  //     if ($assignmentname) {
-  //       $query->where('timesheetreport.partnerid', $assignmentname);
-  //     }
-
-  //   }
-  //   $filteredData = $query->get();
-
-  //   return response()->json($filteredData);
-  // }
-
-
-  public function filterweeklylist(Request $request)
-  {
-    // admin dashboard
-    $clientid = $request->input('clientname');
-    $assignmentid = $request->input('assignmentname');
-
-    $date = DB::table('timesheetreport')->where('id', $request->id)->first();
-
-    $query = DB::table('timesheetusers')
-      ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-      ->leftjoin('clients', 'clients.id', 'timesheetusers.client_id')
-      ->leftjoin('assignments', 'assignments.id', 'timesheetusers.assignment_id')
-      ->leftjoin('teammembers as partnername', 'partnername.id', 'timesheetusers.partner')
-      ->where('timesheetusers.createdby', $request->teamid)
-      ->where('timesheetusers.partner', $request->partnerid)
-      ->where('timesheetusers.status', 1)
-      ->where('timesheetusers.date', '>=', $date->startdate)
-      ->where('timesheetusers.date', '<=', $date->enddate)
-      ->select('timesheetusers.*', 'teammembers.team_member', 'clients.client_name', 'assignments.assignment_name', 'partnername.team_member as partnername_name');
-
-    if ($clientid) {
-      $query->where('timesheetusers.client_id',   $clientid);
-    }
-
-    if ($clientid && $assignmentid) {
-      $query->where(function ($q) use ($clientid, $assignmentid) {
-        $q->where('timesheetusers.client_id',   $clientid)
-          ->where('assignments.id',   $assignmentid);
-      });
-    }
-
-    if ($assignmentid) {
-      $query->where('assignments.id',   $assignmentid);
-    }
-
-    $filteredData = $query->get();
-    return response()->json($filteredData);
-  }
-
 
   public function timesheet_submit(Request $request)
   {
@@ -1894,473 +981,8 @@ class TimesheetController extends Controller
    *
    * @return \Illuminate\Http\Response
    */
-
-  //! old code 
-  // public function create(Request $request)
-  // {
-  //   $partner = Teammember::where('role_id', '=', 13)->where('status', '=', 1)->with('title')->get();
-  //   $teammember = Teammember::where('role_id', '!=', 11)->with('title', 'role')->get();
-  //   if (auth()->user()->role_id == 11) {
-  //     $client = Client::where('status', 1)->select('id', 'client_name')->orderBy('client_name', 'ASC')->get();
-  //   } elseif (auth()->user()->role_id == 13) {
-  //     $clientss = DB::table('assignmentmappings')
-  //       ->leftjoin('assignmentbudgetings', 'assignmentbudgetings.assignmentgenerate_id', 'assignmentmappings.assignmentgenerate_id')
-  //       ->leftjoin('clients', 'clients.id', 'assignmentbudgetings.client_id')
-  //       ->where('assignmentmappings.leadpartner', auth()->user()->teammember_id)
-  //       ->orwhere('assignmentmappings.otherpartner', auth()->user()->teammember_id)
-  //       ->select('clients.client_name', 'clients.id')
-  //       ->orderBy('client_name', 'ASC')
-  //       ->distinct()->get();
-
-  //     $clients = DB::table('clients')
-  //       ->whereIn('id', [29, 32, 33, 34])
-  //       ->select('clients.client_name', 'clients.id')
-  //       ->orderBy('client_name', 'ASC')
-  //       ->distinct()->get();
-
-  //     $client = $clientss->merge($clients);
-  //   } else {
-  //     $client = DB::table('assignmentteammappings')
-  //       ->leftjoin('assignmentmappings', 'assignmentmappings.id', 'assignmentteammappings.assignmentmapping_id')
-  //       ->leftjoin('assignmentbudgetings', 'assignmentbudgetings.assignmentgenerate_id', 'assignmentmappings.assignmentgenerate_id')
-  //       ->leftjoin('clients', 'clients.id', 'assignmentbudgetings.client_id')
-  //       ->orwhere('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
-  //       ->select('clients.client_name', 'clients.id')
-  //       ->orderBy('client_name', 'ASC')
-  //       ->distinct()->get();
-  //   }
-  //   $assignment = Assignment::select('id', 'assignment_name')->get();
-  //   //   dd($assignment);
-  //   if ($request->ajax()) {
-  //     // dd(auth()->user());
-
-  //     // if (auth()->user()->role_id == 13) {
-  //     //   echo "<option>Select Assignment</option>";
-  //     //   foreach (DB::table('assignmentbudgetings')
-  //     //     ->where('client_id', $request->cid)
-  //     //      ->distinct('assignments.id')
-  //     //     ->leftjoin('assignments', 'assignments.id', 'assignmentbudgetings.assignment_id')
-  //     //     ->select('assignmentbudgetings.assignmentgenerate_id', 'assignment_name', 'assignmentgenerate_id')
-  //     //     ->get() as $sub) {
-  //     //     echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
-  //     //   }
-  //     // } 
-
-
-
-
-  //     if (isset($request->cid)) {
-  //       if (auth()->user()->role_id == 13) {
-  //         echo "<option>Select Assignment</option>";
-  //         foreach (DB::table('assignmentbudgetings')->where('client_id', $request->cid)
-  //           ->leftjoin('assignments', 'assignments.id', 'assignmentbudgetings.assignment_id')
-  //           ->orderBy('assignment_name')->get() as $sub) {
-  //           echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
-  //         }
-  //       } else {
-  //         echo "<option>Select Assignment</option>";
-  //         foreach (DB::table('assignmentbudgetings')
-  //           ->join('assignmentmappings', 'assignmentmappings.assignmentgenerate_id', 'assignmentbudgetings.assignmentgenerate_id')
-  //           ->leftjoin('assignments', 'assignments.id', 'assignmentmappings.assignment_id')
-  //           ->leftjoin('assignmentteammappings', 'assignmentteammappings.assignmentmapping_id', 'assignmentmappings.id')
-  //           ->where('assignmentbudgetings.client_id', $request->cid)
-  //           ->where('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
-  //           ->orderBy('assignment_name')->get() as $sub) {
-  //           echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
-  //         }
-  //       }
-  //     }
-  //     if (isset($request->assignment)) {
-
-  //       if (auth()->user()->role_id == 11) {
-  //         echo "<option value=''>Select Partner</option>";
-  //         foreach (DB::table('assignmentmappings')
-
-  //           ->leftjoin('teammembers', 'teammembers.id', 'assignmentmappings.leadpartner')
-  //           ->leftjoin('teammembers as team', 'team.id', 'assignmentmappings.otherpartner')
-  //           ->where('assignmentmappings.assignmentgenerate_id', $request->assignment)
-  //           ->select('team.team_member as team_member', 'team.id', 'teammembers.id', 'teammembers.team_member')
-  //           ->get() as $subs) {
-  //           echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
-  //         }
-  //       } elseif (auth()->user()->role_id == 13) {
-  //         echo "<option value=''>Select Partner</option>";
-  //         foreach (DB::table('teammembers')
-  //           ->where('id', auth()->user()->teammember_id)
-  //           ->select('teammembers.id', 'teammembers.team_member')
-  //           ->get() as $subs) {
-  //           echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
-  //         }
-  //       } else {
-  //         //die;
-  //         echo "<option value=''>Select Partner</option>";
-  //         foreach (DB::table('assignmentmappings')
-
-  //           ->leftjoin('teammembers', 'teammembers.id', 'assignmentmappings.leadpartner')
-  //           ->leftjoin('teammembers as team', 'team.id', 'assignmentmappings.otherpartner')
-  //           ->where('assignmentmappings.assignmentgenerate_id', $request->assignment)
-  //           ->select('team.team_member as team_member', 'team.id', 'teammembers.id', 'teammembers.team_member')
-  //           ->get() as $subs) {
-  //           echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
-  //         }
-  //       }
-
-  //       //        dd($request->assignment);
-
-  //       //  dd($request->assignment);
-
-
-  //     }
-  //   } else {
-  //     return view('backEnd.timesheet.create', compact('client', 'teammember', 'assignment', 'partner'));
-  //   }
-  // }
-
-  //! old code 1
-  // public function create(Request $request)
-  // {
-  //   // dd($request);
-  //   $partner = Teammember::where('role_id', '=', 13)->where('status', '=', 1)->with('title')->get();
-  //   $teammember = Teammember::where('role_id', '!=', 11)->with('title', 'role')->get();
-  //   if (auth()->user()->role_id == 11) {
-  //     $client = Client::where('status', 1)->select('id', 'client_name')->orderBy('client_name', 'ASC')->get();
-  //   } elseif (auth()->user()->role_id == 13) {
-  //     $clientss = DB::table('assignmentmappings')
-  //       ->leftjoin('assignmentbudgetings', 'assignmentbudgetings.assignmentgenerate_id', 'assignmentmappings.assignmentgenerate_id')
-  //       ->leftjoin('clients', 'clients.id', 'assignmentbudgetings.client_id')
-  //       ->where('assignmentmappings.leadpartner', auth()->user()->teammember_id)
-  //       ->orwhere('assignmentmappings.otherpartner', auth()->user()->teammember_id)
-  //       ->select('clients.client_name', 'clients.id')
-  //       ->orderBy('client_name', 'ASC')
-  //       ->distinct()->get();
-
-  //     $clients = DB::table('clients')
-  //       ->whereIn('id', [29, 32, 33, 34])
-  //       ->select('clients.client_name', 'clients.id')
-  //       ->orderBy('client_name', 'ASC')
-  //       ->distinct()->get();
-
-  //     $client = $clientss->merge($clients);
-  //   } else {
-  //     $client = DB::table('assignmentteammappings')
-  //       ->leftjoin('assignmentmappings', 'assignmentmappings.id', 'assignmentteammappings.assignmentmapping_id')
-  //       ->leftjoin('assignmentbudgetings', 'assignmentbudgetings.assignmentgenerate_id', 'assignmentmappings.assignmentgenerate_id')
-  //       ->leftjoin('clients', 'clients.id', 'assignmentbudgetings.client_id')
-  //       ->orwhere('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
-  //       ->select('clients.client_name', 'clients.id')
-  //       ->orderBy('client_name', 'ASC')
-  //       ->distinct()->get();
-  //   }
-  //   $assignment = Assignment::select('id', 'assignment_name')->get();
-  //   //   dd($assignment);
-  //   // shahid assi
-  //   if ($request->ajax()) {
-  //     // dd(auth()->user()->id);
-  //     if (isset($request->cid)) {
-  //       if (auth()->user()->role_id == 13) {
-  //         echo "<option>Select Assignment</option>";
-  //         foreach (DB::table('assignmentbudgetings')->where('client_id', $request->cid)
-  //           ->where('created_by', auth()->user()->id)
-  //           ->leftjoin('assignments', 'assignments.id', 'assignmentbudgetings.assignment_id')
-  //           ->orderBy('assignment_name')->get() as $sub) {
-  //           echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
-  //         }
-  //       } else {
-  //         echo "<option>Select Assignment</option>";
-  //         foreach (DB::table('assignmentbudgetings')
-  //           ->join('assignmentmappings', 'assignmentmappings.assignmentgenerate_id', 'assignmentbudgetings.assignmentgenerate_id')
-  //           ->leftjoin('assignments', 'assignments.id', 'assignmentmappings.assignment_id')
-  //           ->leftjoin('assignmentteammappings', 'assignmentteammappings.assignmentmapping_id', 'assignmentmappings.id')
-  //           ->where('assignmentbudgetings.client_id', $request->cid)
-  //           ->where('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
-  //           ->orderBy('assignment_name')->get() as $sub) {
-  //           echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
-  //         }
-  //       }
-  //     }
-  //     if (isset($request->assignment)) {
-
-  //       if (auth()->user()->role_id == 11) {
-  //         echo "<option value=''>Select Partner</option>";
-  //         foreach (DB::table('assignmentmappings')
-
-  //           ->leftjoin('teammembers', 'teammembers.id', 'assignmentmappings.leadpartner')
-  //           ->leftjoin('teammembers as team', 'team.id', 'assignmentmappings.otherpartner')
-  //           ->where('assignmentmappings.assignmentgenerate_id', $request->assignment)
-  //           ->select('team.team_member as team_member', 'team.id', 'teammembers.id', 'teammembers.team_member')
-  //           ->get() as $subs) {
-  //           echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
-  //         }
-  //       } elseif (auth()->user()->role_id == 13) {
-  //         echo "<option value=''>Select Partner</option>";
-  //         foreach (DB::table('teammembers')
-  //           ->where('id', auth()->user()->teammember_id)
-  //           ->select('teammembers.id', 'teammembers.team_member')
-  //           ->get() as $subs) {
-  //           echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
-  //         }
-  //       } else {
-  //         //die;
-  //         echo "<option value=''>Select Partner</option>";
-  //         foreach (DB::table('assignmentmappings')
-
-  //           ->leftjoin('teammembers', 'teammembers.id', 'assignmentmappings.leadpartner')
-  //           ->leftjoin('teammembers as team', 'team.id', 'assignmentmappings.otherpartner')
-  //           ->where('assignmentmappings.assignmentgenerate_id', $request->assignment)
-  //           ->select('team.team_member as team_member', 'team.id', 'teammembers.id', 'teammembers.team_member')
-  //           ->get() as $subs) {
-  //           echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
-  //         }
-  //       }
-  //     }
-  //   } else {
-  //     return view('backEnd.timesheet.create', compact('client', 'teammember', 'assignment', 'partner'));
-  //   }
-  // }
-
-  //! old code 2
-  // public function create(Request $request)
-  // {
-  //   // dd($request);
-  //   // rejected timesheet details
-  //   $timesheetedit = DB::table('timesheetusers')
-  //     ->leftjoin('clients', 'clients.id', 'timesheetusers.client_id')
-  //     ->leftjoin('assignments', 'assignments.id', 'timesheetusers.assignment_id')
-  //     ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-  //     ->where('timesheetusers.timesheetid', 105419)
-  //     ->select('timesheetusers.*', 'clients.client_name', 'assignments.assignment_name', 'teammembers.team_member')
-  //     ->get();
-  //   // 105890
-  //   // dd($timesheetedit);
-  //   // client of particular partner
-  //   $partner = Teammember::where('role_id', '=', 13)->where('status', '=', 1)->with('title')->get();
-  //   $teammember = Teammember::where('role_id', '!=', 11)->with('title', 'role')->get();
-  //   if (auth()->user()->role_id == 11) {
-  //     $client = Client::where('status', 1)->select('id', 'client_name')->orderBy('client_name', 'ASC')->get();
-  //   } elseif (auth()->user()->role_id == 13) {
-  //     $clientss = DB::table('assignmentmappings')
-  //       ->leftjoin('assignmentbudgetings', 'assignmentbudgetings.assignmentgenerate_id', 'assignmentmappings.assignmentgenerate_id')
-  //       ->leftjoin('clients', 'clients.id', 'assignmentbudgetings.client_id')
-  //       ->where('assignmentmappings.leadpartner', auth()->user()->teammember_id)
-  //       ->orwhere('assignmentmappings.otherpartner', auth()->user()->teammember_id)
-  //       ->select('clients.client_name', 'clients.id')
-  //       ->orderBy('client_name', 'ASC')
-  //       ->distinct()->get();
-
-  //     $clients = DB::table('clients')
-  //       ->whereIn('id', [29, 32, 33, 34])
-  //       ->select('clients.client_name', 'clients.id')
-  //       ->orderBy('client_name', 'ASC')
-  //       ->distinct()->get();
-
-  //     $client = $clientss->merge($clients);
-  //   } else {
-  //     $client = DB::table('assignmentteammappings')
-  //       ->leftjoin('assignmentmappings', 'assignmentmappings.id', 'assignmentteammappings.assignmentmapping_id')
-  //       ->leftjoin('assignmentbudgetings', 'assignmentbudgetings.assignmentgenerate_id', 'assignmentmappings.assignmentgenerate_id')
-  //       ->leftjoin('clients', 'clients.id', 'assignmentbudgetings.client_id')
-  //       ->orwhere('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
-  //       ->select('clients.client_name', 'clients.id')
-  //       ->orderBy('client_name', 'ASC')
-  //       ->distinct()->get();
-  //   }
-  //   $assignment = Assignment::select('id', 'assignment_name')->get();
-  //   //   dd($assignment);
-  //   // shahid assi
-  //   if ($request->ajax()) {
-  //     // dd(auth()->user()->id);
-  //     if (isset($request->cid)) {
-  //       if (auth()->user()->role_id == 13) {
-  //         echo "<option>Select Assignment</option>";
-  //         foreach (DB::table('assignmentbudgetings')->where('client_id', $request->cid)
-  //           ->where('created_by', auth()->user()->id)
-  //           ->leftjoin('assignments', 'assignments.id', 'assignmentbudgetings.assignment_id')
-  //           ->orderBy('assignment_name')->get() as $sub) {
-  //           echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
-  //         }
-  //       } else {
-  //         echo "<option>Select Assignment</option>";
-  //         foreach (DB::table('assignmentbudgetings')
-  //           ->join('assignmentmappings', 'assignmentmappings.assignmentgenerate_id', 'assignmentbudgetings.assignmentgenerate_id')
-  //           ->leftjoin('assignments', 'assignments.id', 'assignmentmappings.assignment_id')
-  //           ->leftjoin('assignmentteammappings', 'assignmentteammappings.assignmentmapping_id', 'assignmentmappings.id')
-  //           ->where('assignmentbudgetings.client_id', $request->cid)
-  //           ->where('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
-  //           ->orderBy('assignment_name')->get() as $sub) {
-  //           echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
-  //         }
-  //       }
-  //     }
-  //     if (isset($request->assignment)) {
-
-  //       if (auth()->user()->role_id == 11) {
-  //         echo "<option value=''>Select Partner</option>";
-  //         foreach (DB::table('assignmentmappings')
-
-  //           ->leftjoin('teammembers', 'teammembers.id', 'assignmentmappings.leadpartner')
-  //           ->leftjoin('teammembers as team', 'team.id', 'assignmentmappings.otherpartner')
-  //           ->where('assignmentmappings.assignmentgenerate_id', $request->assignment)
-  //           ->select('team.team_member as team_member', 'team.id', 'teammembers.id', 'teammembers.team_member')
-  //           ->get() as $subs) {
-  //           echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
-  //         }
-  //       } elseif (auth()->user()->role_id == 13) {
-  //         echo "<option value=''>Select Partner</option>";
-  //         foreach (DB::table('teammembers')
-  //           ->where('id', auth()->user()->teammember_id)
-  //           ->select('teammembers.id', 'teammembers.team_member')
-  //           ->get() as $subs) {
-  //           echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
-  //         }
-  //       } else {
-  //         //die;
-  //         echo "<option value=''>Select Partner</option>";
-  //         foreach (DB::table('assignmentmappings')
-
-  //           ->leftjoin('teammembers', 'teammembers.id', 'assignmentmappings.leadpartner')
-  //           ->leftjoin('teammembers as team', 'team.id', 'assignmentmappings.otherpartner')
-  //           ->where('assignmentmappings.assignmentgenerate_id', $request->assignment)
-  //           ->select('team.team_member as team_member', 'team.id', 'teammembers.id', 'teammembers.team_member')
-  //           ->get() as $subs) {
-  //           echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
-  //         }
-  //       }
-  //     }
-  //   } else {
-  //     return view('backEnd.timesheet.create', compact('client', 'teammember', 'assignment', 'partner', 'timesheetedit'));
-  //   }
-  // }
-  //! old code 21-12-23
-  // public function create(Request $request)
-  // {
-  //   // dd(auth()->user()->teammember_id);
-  //   $partner = Teammember::where('role_id', '=', 13)->where('status', '=', 1)->with('title')->get();
-  //   $teammember = Teammember::where('role_id', '!=', 11)->with('title', 'role')->get();
-  //   if (auth()->user()->role_id == 11) {
-  //     $client = Client::where('status', 1)->select('id', 'client_name')->orderBy('client_name', 'ASC')->get();
-  //   } elseif (auth()->user()->role_id == 13) {
-  //     $clientss = DB::table('assignmentmappings')
-  //       ->leftjoin('assignmentbudgetings', 'assignmentbudgetings.assignmentgenerate_id', 'assignmentmappings.assignmentgenerate_id')
-  //       ->leftjoin('clients', 'clients.id', 'assignmentbudgetings.client_id')
-  //       ->where('assignmentmappings.leadpartner', auth()->user()->teammember_id)
-  //       ->orwhere('assignmentmappings.otherpartner', auth()->user()->teammember_id)
-  //       ->select('clients.client_name', 'clients.id')
-  //       ->orderBy('client_name', 'ASC')
-  //       ->distinct()->get();
-  //     // done default $clients in ajax if need then $clientss add in ajax target $request->cid == 29 || $request->cid == 32 || $request->cid == 33 || $request->cid == 34
-  //     $clients = DB::table('clients')
-  //       ->whereIn('id', [29, 32, 33, 34])
-  //       ->select('clients.client_name', 'clients.id')
-  //       ->orderBy('client_name', 'ASC')
-  //       ->distinct()->get();
-
-  //     $client = $clientss->merge($clients);
-  //   } else {
-  //     $client = DB::table('assignmentteammappings')
-  //       ->leftjoin('assignmentmappings', 'assignmentmappings.id', 'assignmentteammappings.assignmentmapping_id')
-  //       ->leftjoin('assignmentbudgetings', 'assignmentbudgetings.assignmentgenerate_id', 'assignmentmappings.assignmentgenerate_id')
-  //       ->leftjoin('clients', 'clients.id', 'assignmentbudgetings.client_id')
-  //       ->orwhere('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
-  //       ->select('clients.client_name', 'clients.id')
-  //       ->orderBy('client_name', 'ASC')
-  //       ->distinct()->get();
-  //   }
-  //   $assignment = Assignment::select('id', 'assignment_name')->get();
-  //   // dd($assignment);
-  //   if ($request->ajax()) {
-  //     // dd(auth()->user()->teammember_id);
-  //     if (isset($request->cid)) {
-  //       if (auth()->user()->role_id == 13) {
-  //         echo "<option>Select Assignment</option>";
-
-  //         if ($request->cid == 29 || $request->cid == 32 || $request->cid == 33 || $request->cid == 34) {
-  //           $clients = DB::table('clients')
-  //             // ->whereIn('id', [29, 32, 33, 34])
-  //             ->where('id', $request->cid)
-  //             ->select('clients.client_name', 'clients.id')
-  //             ->orderBy('client_name', 'ASC')
-  //             ->distinct()->get();
-  //           // dd($clients);
-  //           $id = $clients[0]->id;
-  //           foreach (DB::table('assignmentbudgetings')->where('client_id', $id)
-  //             ->leftjoin('assignments', 'assignments.id', 'assignmentbudgetings.assignment_id')
-  //             ->orderBy('assignment_name')->get() as $sub) {
-  //             echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
-  //           }
-  //         } else {
-  //           foreach (DB::table('assignmentbudgetings')->where('client_id', $request->cid)
-  //             ->where('created_by', auth()->user()->id)
-  //             ->leftjoin('assignments', 'assignments.id', 'assignmentbudgetings.assignment_id')
-  //             ->orderBy('assignment_name')->get() as $sub) {
-  //             echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
-  //           }
-  //         }
-  //       }
-  //       // assreject
-  //       else {
-  //         echo "<option>Select Assignment</option>";
-  //         foreach (DB::table('assignmentbudgetings')
-  //           ->join('assignmentmappings', 'assignmentmappings.assignmentgenerate_id', 'assignmentbudgetings.assignmentgenerate_id')
-  //           ->leftjoin('assignments', 'assignments.id', 'assignmentmappings.assignment_id')
-  //           ->leftjoin('assignmentteammappings', 'assignmentteammappings.assignmentmapping_id', 'assignmentmappings.id')
-  //           ->where('assignmentbudgetings.client_id', $request->cid)
-  //           ->where('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
-  //           //  ->where('assignmentteammappings.status', '!=', 0)
-  //           // ->whereNull('assignmentteammappings.status')
-  //           ->where(function ($query) {
-  //             $query->whereNull('assignmentteammappings.status')
-  //               ->orWhere('assignmentteammappings.status', '=', 1);
-  //           })
-  //           ->orderBy('assignment_name')->get() as $sub) {
-  //           echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
-  //         }
-  //       }
-  //     }
-
-  //     if (isset($request->assignment)) {
-  //       // dd($request->assignment);
-  //       if (auth()->user()->role_id == 11) {
-  //         echo "<option value=''>Select Partner</option>";
-  //         foreach (DB::table('assignmentmappings')
-
-  //           ->leftjoin('teammembers', 'teammembers.id', 'assignmentmappings.leadpartner')
-  //           ->leftjoin('teammembers as team', 'team.id', 'assignmentmappings.otherpartner')
-  //           ->where('assignmentmappings.assignmentgenerate_id', $request->assignment)
-  //           ->select('team.team_member as team_member', 'team.id', 'teammembers.id', 'teammembers.team_member')
-  //           ->get() as $subs) {
-  //           echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
-  //         }
-  //       } elseif (auth()->user()->role_id == 13) {
-  //         echo "<option value=''>Select Partner</option>";
-  //         foreach (DB::table('teammembers')
-  //           ->where('id', auth()->user()->teammember_id)
-  //           ->select('teammembers.id', 'teammembers.team_member')
-  //           ->get() as $subs) {
-  //           echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
-  //         }
-  //       } else {
-  //         //die;
-  //         echo "<option value=''>Select Partner</option>";
-  //         foreach (DB::table('assignmentmappings')
-
-  //           ->leftjoin('teammembers', 'teammembers.id', 'assignmentmappings.leadpartner')
-  //           ->leftjoin('teammembers as team', 'team.id', 'assignmentmappings.otherpartner')
-  //           ->where('assignmentmappings.assignmentgenerate_id', $request->assignment)
-  //           ->select('team.team_member as team_member', 'team.id', 'teammembers.id', 'teammembers.team_member')
-  //           ->get() as $subs) {
-  //           echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
-  //         }
-  //       }
-  //     }
-  //   } else {
-  //     return view('backEnd.timesheet.create', compact('client', 'teammember', 'assignment', 'partner'));
-  //   }
-  // }
-
-  //! new code 21-12-23
   public function create(Request $request)
   {
-    // upadte create function and status in assignmentteammappings
     // dd(auth()->user()->teammember_id);
     $partner = Teammember::where('role_id', '=', 13)->where('status', '=', 1)->with('title')->get();
     $teammember = Teammember::where('role_id', '!=', 11)->with('title', 'role')->get();
@@ -2425,14 +1047,14 @@ class TimesheetController extends Controller
             foreach (DB::table('assignmentbudgetings')->where('client_id', $id)
               ->leftjoin('assignments', 'assignments.id', 'assignmentbudgetings.assignment_id')
               ->orderBy('assignment_name')->get() as $sub) {
-              echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
+              echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentname . '/' . $sub->assignmentgenerate_id . ' )' . "</option>";
             }
           } else {
             foreach (DB::table('assignmentbudgetings')->where('client_id', $request->cid)
-              ->where('created_by', auth()->user()->id)
+              //  ->where('created_by', auth()->user()->id)
               ->leftjoin('assignments', 'assignments.id', 'assignmentbudgetings.assignment_id')
               ->orderBy('assignment_name')->get() as $sub) {
-              echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
+              echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentname . '/' . $sub->assignmentgenerate_id . ' )' . "</option>";
             }
           }
         }
@@ -2452,17 +1074,9 @@ class TimesheetController extends Controller
             foreach (DB::table('assignmentbudgetings')->where('client_id', $id)
               ->leftjoin('assignments', 'assignments.id', 'assignmentbudgetings.assignment_id')
               ->orderBy('assignment_name')->get() as $sub) {
-              echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
+              echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentname . '/' . $sub->assignmentgenerate_id . ' )' . "</option>";
             }
           } else {
-            //!old code
-            // foreach (DB::table('assignmentbudgetings')->where('client_id', $request->cid)
-            //   ->where('created_by', auth()->user()->id)
-            //   ->leftjoin('assignments', 'assignments.id', 'assignmentbudgetings.assignment_id')
-            //   ->orderBy('assignment_name')->get() as $sub) {
-            //   echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
-            // }
-
             //  i have add this code after kartic bindal problem 
             foreach (DB::table('assignmentbudgetings')
               ->join('assignmentmappings', 'assignmentmappings.assignmentgenerate_id', 'assignmentbudgetings.assignmentgenerate_id')
@@ -2470,38 +1084,16 @@ class TimesheetController extends Controller
               ->leftjoin('assignmentteammappings', 'assignmentteammappings.assignmentmapping_id', 'assignmentmappings.id')
               ->where('assignmentbudgetings.client_id', $request->cid)
               ->where('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
-
+              //  ->where('assignmentteammappings.status', '!=', 0)
+              // ->whereNull('assignmentteammappings.status')
               ->where(function ($query) {
                 $query->whereNull('assignmentteammappings.status')
-                  ->orWhere('assignmentteammappings.status', '=', 0);
+                  ->orWhere('assignmentteammappings.status', '=', 1);
               })
               ->orderBy('assignment_name')->get() as $sub) {
-              echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
+              echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentname . '/' . $sub->assignmentgenerate_id . ' )' . "</option>";
             }
           }
-
-          // echo "<option>Select Assignment</option>";
-          // foreach (DB::table('assignmentbudgetings')
-          //   ->join('assignmentmappings', 'assignmentmappings.assignmentgenerate_id', 'assignmentbudgetings.assignmentgenerate_id')
-          //   ->leftjoin('assignments', 'assignments.id', 'assignmentmappings.assignment_id')
-          //   ->leftjoin('assignmentteammappings', 'assignmentteammappings.assignmentmapping_id', 'assignmentmappings.id')
-          //   ->where('assignmentbudgetings.client_id', $request->cid)
-          //   ->where('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
-          //   //  ->where('assignmentteammappings.status', '!=', 0)
-          //   // ->whereNull('assignmentteammappings.status')
-          //   ->where(function ($query) {
-          //     $query->whereNull('assignmentteammappings.status')
-          //       ->orWhere('assignmentteammappings.status', '=', 1);
-          //   })
-          //   ->orderBy('assignment_name')->get() as $sub) {
-          //   echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
-
-
-          //* i have removed above line 21-12-23 ko so may be occure any problem in future regarding inactive / active teammember from assignment          
-          //* basically i have fixed hare sahil gupta (staff) ko off holiday nahi aa raha tha timesheet create me  if any problem in future then run old code 21-12-23
-          //* end hare 
-
-
         }
       }
 
@@ -2544,339 +1136,6 @@ class TimesheetController extends Controller
       return view('backEnd.timesheet.create', compact('client', 'teammember', 'assignment', 'partner'));
     }
   }
-
-  //* timesheet edit fubctionality
-  // public function timesheetEdit(Request $request, $id)
-  // {
-
-  //   $timesheetedit = DB::table('timesheetusers')
-  //     ->leftjoin('clients', 'clients.id', 'timesheetusers.client_id')
-  //     ->leftjoin('assignments', 'assignments.id', 'timesheetusers.assignment_id')
-  //     ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-  //     ->where('timesheetusers.timesheetid', $id)
-  //     ->select('timesheetusers.*', 'clients.client_name', 'assignments.assignment_name', 'teammembers.team_member')
-  //     ->get();
-  //   // 105890
-  //   // dd($timesheetedit);
-  //   // client of particular partner
-  //   if (auth()->user()->role_id == 13) {
-  //     $clientss = DB::table('assignmentmappings')
-  //       ->leftjoin('assignmentbudgetings', 'assignmentbudgetings.assignmentgenerate_id', 'assignmentmappings.assignmentgenerate_id')
-  //       ->leftjoin('clients', 'clients.id', 'assignmentbudgetings.client_id')
-  //       ->where('assignmentmappings.leadpartner', auth()->user()->teammember_id)
-  //       ->orwhere('assignmentmappings.otherpartner', auth()->user()->teammember_id)
-  //       ->select('clients.client_name', 'clients.id')
-  //       ->orderBy('client_name', 'ASC')
-  //       ->distinct()
-  //       ->get();
-  //     // done default $clients in ajax if need then $clientss add in ajax target $request->cid == 29 || $request->cid == 32 || $request->cid == 33 || $request->cid == 34
-  //     $clients = DB::table('clients')
-  //       ->whereIn('id', [29, 32, 33, 34])
-  //       ->select('clients.client_name', 'clients.id')
-  //       ->orderBy('client_name', 'ASC')
-  //       ->distinct()
-  //       ->get();
-
-  //     $client = $clientss->merge($clients);
-  //   } else {
-  //     $client = DB::table('assignmentteammappings')
-  //       ->leftjoin('assignmentmappings', 'assignmentmappings.id', 'assignmentteammappings.assignmentmapping_id')
-  //       ->leftjoin('assignmentbudgetings', 'assignmentbudgetings.assignmentgenerate_id', 'assignmentmappings.assignmentgenerate_id')
-  //       ->leftjoin('clients', 'clients.id', 'assignmentbudgetings.client_id')
-  //       ->orwhere('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
-  //       ->select('clients.client_name', 'clients.id')
-  //       ->orderBy('client_name', 'ASC')
-  //       ->distinct()->get();
-  //   }
-
-
-  //   // return view('backEnd.timesheet.correction', compact('timesheetedit', 'client', 'assignment'));
-  //   return view('backEnd.timesheet.correction', compact('timesheetedit', 'client'));
-  // }
-
-  //* timesheet edit fubctionality
-  public function timesheetEdit(Request $request, $id)
-  {
-    $timesheetedit = DB::table('timesheetusers')
-      ->leftjoin('clients', 'clients.id', 'timesheetusers.client_id')
-      ->leftjoin('assignments', 'assignments.id', 'timesheetusers.assignment_id')
-      ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-      // ->where('timesheetusers.timesheetid', 105419)
-      ->where('timesheetusers.timesheetid', $id)
-      ->select('timesheetusers.*', 'clients.client_name', 'assignments.assignment_name', 'teammembers.team_member')
-      ->get();
-    // 105890
-    // dd($timesheetedit);
-    // client of particular partner
-    $partner = Teammember::where('role_id', '=', 13)->where('status', '=', 1)->with('title')->get();
-    $teammember = Teammember::where('role_id', '!=', 11)->with('title', 'role')->get();
-    if (auth()->user()->role_id == 11) {
-      $client = Client::where('status', 1)->select('id', 'client_name')->orderBy('client_name', 'ASC')->get();
-    } elseif (auth()->user()->role_id == 13) {
-      $clientss = DB::table('assignmentmappings')
-        ->leftjoin('assignmentbudgetings', 'assignmentbudgetings.assignmentgenerate_id', 'assignmentmappings.assignmentgenerate_id')
-        ->leftjoin('clients', 'clients.id', 'assignmentbudgetings.client_id')
-        ->where('assignmentmappings.leadpartner', auth()->user()->teammember_id)
-        ->orwhere('assignmentmappings.otherpartner', auth()->user()->teammember_id)
-        ->select('clients.client_name', 'clients.id')
-        ->orderBy('client_name', 'ASC')
-        ->distinct()->get();
-
-      $clients = DB::table('clients')
-        ->whereIn('id', [29, 32, 33, 34])
-        ->select('clients.client_name', 'clients.id')
-        ->orderBy('client_name', 'ASC')
-        ->distinct()->get();
-
-      $client = $clientss->merge($clients);
-    } else {
-      $client = DB::table('assignmentteammappings')
-        ->leftjoin('assignmentmappings', 'assignmentmappings.id', 'assignmentteammappings.assignmentmapping_id')
-        ->leftjoin('assignmentbudgetings', 'assignmentbudgetings.assignmentgenerate_id', 'assignmentmappings.assignmentgenerate_id')
-        ->leftjoin('clients', 'clients.id', 'assignmentbudgetings.client_id')
-        ->orwhere('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
-        ->select('clients.client_name', 'clients.id')
-        ->orderBy('client_name', 'ASC')
-        ->distinct()->get();
-    }
-    $assignment = Assignment::select('id', 'assignment_name')->get();
-    //   dd($assignment);
-    // shahid assi
-    if ($request->ajax()) {
-      // dd(auth()->user()->id);
-      if (isset($request->cid)) {
-        if (auth()->user()->role_id == 13) {
-          echo "<option>Select Assignment</option>";
-          foreach (DB::table('assignmentbudgetings')->where('client_id', $request->cid)
-            ->where('created_by', auth()->user()->id)
-            ->leftjoin('assignments', 'assignments.id', 'assignmentbudgetings.assignment_id')
-            ->orderBy('assignment_name')->get() as $sub) {
-            echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
-          }
-        } else {
-          echo "<option>Select Assignment</option>";
-          foreach (DB::table('assignmentbudgetings')
-            ->join('assignmentmappings', 'assignmentmappings.assignmentgenerate_id', 'assignmentbudgetings.assignmentgenerate_id')
-            ->leftjoin('assignments', 'assignments.id', 'assignmentmappings.assignment_id')
-            ->leftjoin('assignmentteammappings', 'assignmentteammappings.assignmentmapping_id', 'assignmentmappings.id')
-            ->where('assignmentbudgetings.client_id', $request->cid)
-            ->where('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
-            ->orderBy('assignment_name')->get() as $sub) {
-            echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
-          }
-        }
-      }
-      if (isset($request->assignment)) {
-
-        if (auth()->user()->role_id == 11) {
-          echo "<option value=''>Select Partner</option>";
-          foreach (DB::table('assignmentmappings')
-
-            ->leftjoin('teammembers', 'teammembers.id', 'assignmentmappings.leadpartner')
-            ->leftjoin('teammembers as team', 'team.id', 'assignmentmappings.otherpartner')
-            ->where('assignmentmappings.assignmentgenerate_id', $request->assignment)
-            ->select('team.team_member as team_member', 'team.id', 'teammembers.id', 'teammembers.team_member')
-            ->get() as $subs) {
-            echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
-          }
-        } elseif (auth()->user()->role_id == 13) {
-          echo "<option value=''>Select Partner</option>";
-          foreach (DB::table('teammembers')
-            ->where('id', auth()->user()->teammember_id)
-            ->select('teammembers.id', 'teammembers.team_member')
-            ->get() as $subs) {
-            echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
-          }
-        } else {
-          //die;
-          echo "<option value=''>Select Partner</option>";
-          foreach (DB::table('assignmentmappings')
-
-            ->leftjoin('teammembers', 'teammembers.id', 'assignmentmappings.leadpartner')
-            ->leftjoin('teammembers as team', 'team.id', 'assignmentmappings.otherpartner')
-            ->where('assignmentmappings.assignmentgenerate_id', $request->assignment)
-            ->select('team.team_member as team_member', 'team.id', 'teammembers.id', 'teammembers.team_member')
-            ->get() as $subs) {
-            echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
-          }
-        }
-      }
-    } else {
-      return view('backEnd.timesheet.correction', compact('client', 'teammember', 'assignment', 'partner', 'timesheetedit'));
-    }
-  }
-
-  //* timesheet edit fubctionality
-  public function timesheeteditstore(Request $request)
-  {
-    // dd($request);
-    if (!is_numeric($request->assignment_id)) {
-      $assignment = Assignmentmapping::where('assignmentgenerate_id', $request->assignment_id)
-        ->select('assignment_id')
-        ->get()
-        ->toArray();
-      $assignment_id = $assignment[0]['assignment_id'];
-    } else {
-      $assignment_id = $request->assignment_id;
-    }
-    try {
-      DB::table('timesheetusers')->where('id', $request->timesheetusersid)->update([
-        'status'   =>   3,
-        'client_id'   =>  $request->client_id,
-        // 'assignment_id'   =>  $request->assignment_id,
-        'assignment_id'   =>   $assignment_id,
-        'partner'   =>  $request->partner,
-        'workitem'   =>   $request->workitem,
-        'createdby'   =>   $request->createdby,
-        'location'   =>   $request->location,
-        'hour'   =>   $request->hour,
-      ]);
-
-      if ($request->status == 2) {
-        DB::table('timesheetupdatelogs')->insert([
-          'timesheetusers_id'   =>  $request->timesheetusersid,
-          'status'   =>   3,
-          'created_at' => now(),
-          'updated_at' => now(),
-        ]);
-      }
-      $output = array('msg' => 'Updated Successfully');
-      // return back()->with('statuss', $output);
-      return redirect()->to('rejectedlist')->with('statuss', $output);
-    } catch (Exception $e) {
-      DB::rollBack();
-      Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
-      report($e);
-      $output = array('msg' => $e->getMessage());
-      return back()->withErrors($output)->withInput();
-    }
-    //$id=77;
-    // $client = Client::select('id', 'client_name')->get();
-    // $time = DB::table('timesheets')->where('id', $id)->first();
-    // $date = $time->date;
-    // $assignment = Assignment::select('id', 'assignment_name')->get();
-    // $timesheet = DB::table('timesheetusers')
-    //   ->leftjoin('clients', 'clients.id', 'timesheetusers.client_id')
-    //   ->leftjoin('assignments', 'assignments.id', 'timesheetusers.assignment_id')
-    //   ->where('timesheetusers.timesheetid', $id)
-    //   ->select('timesheetusers.*', 'clients.client_name', 'assignments.assignment_name')
-    //   ->get();
-    // //   dd($timesheet);
-    // $count = count($timesheet = DB::table('timesheetusers')->where('timesheetusers.date', $date)->get());
-    // //  dd( $count);
-    // // $totalhour=$timesheet->totalhour;
-
-    // $rcount = 5 - $count;
-
-    // return view('backEnd.timesheet.edit', compact('id', 'timesheet', 'client', 'assignment', 'date', 'rcount', 'count'));
-  }
-
-  public function rejectedlist(Request $request)
-  {
-    // dd($request);
-    // dd(auth()->user());
-    if (auth()->user()->role_id == 13) {
-      $timesheetData = DB::table('timesheetusers')
-        ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-        ->where('timesheetusers.createdby', auth()->user()->teammember_id)
-        // ->where('timesheetusers.status', 2)
-        ->whereIn('timesheetusers.status', [2, 3])
-        ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->paginate(10);
-      // dd($timesheetData);
-    } else if (auth()->user()->role_id == 11) {
-      $timesheetData = DB::table('timesheetusers')
-        ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-        // ->where('timesheetusers.createdby', $request->teamid)
-        // ->where('timesheetusers.partner', $request->partnerid)
-        ->whereIn('timesheetusers.status', [2, 3])
-        ->where('timesheetusers.rejectedby', auth()->user()->teammember_id)
-        // ->whereIn('timesheetusers.status', [1, 2])
-        // ->where('timesheetusers.date', '>=', $date->startdate)
-        // ->where('timesheetusers.date', '<=', $date->enddate)
-        ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
-    } else {
-      $timesheetData = DB::table('timesheetusers')
-        ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-        ->where('timesheetusers.createdby', auth()->user()->teammember_id)
-        ->whereIn('timesheetusers.status', [2, 3])
-        ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->paginate(10);
-      // dd($timesheetData);
-    }
-    // dd($timesheetData);
-    return view('backEnd.timesheet.rejectedlist', compact('timesheetData'));
-  }
-  // all rejected timesheet on patner for team
-  public function rejectedlistteam(Request $request)
-  {
-    // dd($request);
-    if (auth()->user()->role_id == 13) {
-      $timesheetData = DB::table('timesheetusers')
-        ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-        // ->where('timesheetusers.status', 2)
-        ->whereIn('timesheetusers.status', [2, 3])
-        ->where('timesheetusers.rejectedby', auth()->user()->teammember_id)
-        ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
-    }
-    // return view('backEnd.timesheet.rejectedlist', compact('timesheetData'));
-    return view('backEnd.timesheet.rejectedlistteam', compact('timesheetData'));
-  }
-  public function rejectedtimesheetlog(Request $request)
-  {
-    if (auth()->user()->role_id == 11) {
-      $timesheetData = DB::table('timesheetusers')
-        ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-        ->whereIn('timesheetusers.status', [2, 3])
-        ->where('timesheetusers.rejectedby', auth()->user()->teammember_id)
-        ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
-    }
-    // elseif (auth()->user()->role_id == 13) {
-    //   $timesheetData = DB::table('timesheetusers')
-    //     ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
-    //     ->whereIn('timesheetusers.status', [2, 3])
-    //     ->where('timesheetusers.rejectedby', auth()->user()->teammember_id)
-    //     ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
-    // }
-    return view('backEnd.timesheet.rejectedlist', compact('timesheetData'));
-  }
-
-  public function  timesheetreject($id)
-  {
-    // dd($id);
-    try {
-      DB::table('timesheetusers')->where('id', $id)->update([
-
-        'status'   => 2,
-        'rejectedby'   =>   auth()->user()->teammember_id,
-
-      ]);
-      // timesheet rejected mail
-      $data = DB::table('teammembers')
-        ->leftjoin('timesheetusers', 'timesheetusers.createdby', 'teammembers.id')
-        ->where('timesheetusers.id', $id)
-        ->first();
-      $emailData = [
-        'emailid' => $data->emailid,
-        'teammember_name' => $data->team_member,
-      ];
-
-      Mail::send('emails.timesheetrejected', $emailData, function ($msg) use ($emailData) {
-        $msg->to([$emailData['emailid']]);
-        $msg->subject('Timesheet rejected');
-      });
-      // timesheet rejected mail end hare
-
-
-      $output = array('msg' => 'Rejected Successfully');
-      return back()->with('statuss', $output);
-    } catch (Exception $e) {
-      DB::rollBack();
-      Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
-      report($e);
-      $output = array('msg' => $e->getMessage());
-      return back()->withErrors($output)->withInput();
-    }
-  }
-
   public function timesheetajax()
   {
     if ($request->ajax()) {
@@ -2899,271 +1158,6 @@ class TimesheetController extends Controller
    * @param  \Illuminate\Http\Request  $request
    * @return \Illuminate\Http\Response
    */
-
-  //! old code
-  // public function store(Request $request)
-  // {
-
-  //   // dd(auth()->user()->teammember_id);
-
-  //   try {
-
-  //     $data = $request->except(['_token', 'teammember_id', 'amount']);
-
-  //     //	if ($request->date < '11-09-2023') {
-  //     //dd('hi');
-  //     // $output = array('msg' => 'Please fill timesheet from 11/09/2023, Monday onwards');
-  //     //  return back()->with('success', $output);
-  //     //   }
-
-  //     //die;
-  //     //? dd(date('w', strtotime($request->date))); // 4
-  //     if (date('w', strtotime($request->date)) == 0) {
-  //       $previousSaturday = date('Y-m-d', strtotime('-1 day', strtotime($request->date)));
-  //       $previousSaturdayFilled = DB::table('timesheetusers')
-  //         ->where('createdby', auth()->user()->teammember_id)
-  //         ->where('date', $previousSaturday)
-  //         ->where('status', 1)
-  //         ->first();
-  //       // dd('hi1', $previousSaturdayFilled);
-  //       if ($previousSaturdayFilled != null) {
-  //         $output = array('msg' => 'You already submitted for this week');
-  //         return back()->with('success', $output);
-  //       }
-  //     }
-
-  //     $hours = $request->input('totalhour');
-  //     if (!is_numeric($hours) || $hours > 12) {
-  //       $output = array('msg' => 'The total hours cannot be greater than 12');
-  //       return back()->with('success', $output);
-  //     }
-
-
-  //     $previouschck = DB::table('timesheetusers')
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->where('date', date('Y-m-d', strtotime($request->date)))
-  //       ->where('status', 1)
-  //       ->first();
-
-  //     dd('hi2', $previouschck);
-  //     if ($previouschck != null) {
-  //       //dd('hi');
-  //       $output = array('msg' => 'You already submitted for this week');
-  //       return back()->with('success', $output);
-  //     }
-
-  //     $previoussavechck = DB::table('timesheetusers')
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->where('date', date('Y-m-d', strtotime($request->date)))
-  //       ->where('status', 0)
-  //       ->first();
-
-  //     dd('hi3', $previoussavechck);
-  //     if ($previoussavechck != null) {
-  //       //dd('hi');
-  //       $output = array('msg' => 'You already submitted for this date');
-  //       return back()->with('success', $output);
-  //     }
-
-
-
-  //     $currentDate = Carbon::now()->format('d-m-Y');
-  //     //dd($currentHour);
-  //     // if ($currentDate == $request->date && Carbon::now()->hour < 18) {
-  //     //   //dd('hi');
-  //     //   $output = array('msg' => 'You can only fill today timesheet after 6:00 pm');
-  //     //   return back()->with('success', $output);
-  //     // }
-
-  //     $leaves = DB::table('applyleaves')
-  //       ->where('applyleaves.createdby', auth()->user()->teammember_id)
-  //       ->where('status', '!=', 2)
-  //       ->select('applyleaves.from', 'applyleaves.to')
-  //       ->get();
-
-  //     foreach ($leaves as $leave) {
-  //       //Convert each data from table to Y-m-d format to compare
-  //       $days = CarbonPeriod::create(
-  //         date('Y-m-d', strtotime($leave->from)),
-  //         date('Y-m-d', strtotime($leave->to))
-  //       );
-
-  //       foreach ($days as $day) {
-  //         $leavess[] = $day->format('Y-m-d');
-  //       }
-  //     }
-  //     $currentday = date('Y-m-d', strtotime($request->date));
-  //     // $ifcount=0;
-  //     //  $elsecount=0;
-
-  //     if (count($leaves) != 0) {
-  //       //dd('if');
-  //       foreach ($leavess as $leave) {
-  //         // echo"<pre>";
-  //         //  print_r($leave);
-
-  //         if ($leave == $currentday) {
-  //           //dd('if');
-  //           // $ifcount=$ifcount+1;
-  //           $output = array('msg' => 'You Have Leave for the Day (' . date('d-m-Y', strtotime($leave)) . ')');
-  //           return redirect('timesheet')->with('statuss', $output);
-  //         }
-  //       }
-  //     }
-  //     $id = DB::table('timesheets')->insertGetId(
-  //       [
-  //         'created_by' => auth()->user()->teammember_id,
-  //         'month'     =>    date('F', strtotime($request->date)),
-  //         'date'     =>    date('Y-m-d', strtotime($request->date)),
-  //         'created_at'          =>     date('Y-m-d H:i:s'),
-  //       ]
-  //     );
-  //     // dd('else');
-  //     $count = count($request->assignment_id);
-  //     // dd($count);
-  //     for ($i = 0; $i < $count; $i++) {
-  //       //dd($request->workitem[$i]);
-  //       $assignment =  DB::table('assignmentmappings')->where('assignmentgenerate_id', $request->assignment_id[$i])->first();
-
-  //       $a = DB::table('timesheetusers')->insert([
-  //         'date'     =>     $request->date,
-  //         'client_id'     =>     $request->client_id[$i],
-  //         'workitem'     =>     $request->workitem[$i],
-  //         'location'     =>     $request->location[$i],
-  //         //   'billable_status'     =>     $request->billable_status[$i],
-  //         'timesheetid'     =>     $id,
-  //         'date'     =>     date('Y-m-d', strtotime($request->date)),
-  //         'hour'     =>     $request->hour[$i],
-  //         'totalhour' =>      $request->totalhour,
-  //         'assignment_id'     =>     $assignment->assignment_id,
-  //         'partner'     =>     $request->partner[$i],
-  //         'createdby' => auth()->user()->teammember_id,
-  //         'created_at'          =>     date('Y-m-d H:i:s'),
-  //         'updated_at'              =>    date('Y-m-d H:i:s'),
-  //       ]);
-  //     }
-
-
-  //     //Attendance code
-
-  //     $hdatess = date('Y-m-d', strtotime($request->date));
-  //     $day =  DateTime::createFromFormat('Y-m-d', $hdatess)->format('d');      //
-  //     $month =  DateTime::createFromFormat('Y-m-d', $hdatess)->format('F');   //
-  //     $currentDate = new DateTime();
-  //     $currentMonth = $currentDate->format('F');
-  //     //dd($month);
-  //     //   if ($currentDate->format('j') > 25) {
-  //     //     $currentDate->modify('-1 month');
-  //     //     $currentMonth = $currentDate->format('F');
-  //     // }
-
-
-
-  //     $dates = [
-  //       '26' => 'twentysix',
-  //       '27' => 'twentyseven',
-  //       '28' => 'twentyeight',
-  //       '29' => 'twentynine',
-  //       '30' => 'thirty',
-  //       '31' => 'thirtyone',
-  //       '01' => 'one',
-  //       '02' => 'two',
-  //       '03' => 'three',
-  //       '04' => 'four',
-  //       '05' => 'five',
-  //       '06' => 'six',
-  //       '07' => 'seven',
-  //       '08' => 'eight',
-  //       '09' => 'nine',
-  //       '10' => 'ten',
-  //       '11' => 'eleven',
-  //       '12' => 'twelve',
-  //       '13' => 'thirteen',
-  //       '14' => 'fourteen',
-  //       '15' => 'fifteen',
-  //       '16' => 'sixteen',
-  //       '17' => 'seventeen',
-  //       '18' => 'eighteen',
-  //       '19' => 'ninghteen',
-  //       '20' => 'twenty',
-  //       '21' => 'twentyone',
-  //       '22' => 'twentytwo',
-  //       '23' => 'twentythree',
-  //       '24' => 'twentyfour',
-  //       '25' => 'twentyfive',
-  //     ];
-
-
-
-  //     if ($month != $currentMonth && $day > 25) {
-  //       $dateTime = DateTime::createFromFormat('Y-m-d', $hdatess);
-  //       $dateTime->modify('+1 month');
-  //       $month = $dateTime->format('F');
-  //     }
-  //     if ($month != $currentMonth && $day < 25) {
-  //       $dateTime = DateTime::createFromFormat('Y-m-d', $hdatess);
-  //       $month = $dateTime->format('F');
-  //     }
-  //     if ($month == $currentMonth && $day > 25) {
-
-  //       $dateTime = DateTime::createFromFormat('Y-m-d', $hdatess);
-  //       $dateTime->modify('+1 month');
-  //       $month = $dateTime->format('F');
-  //     }
-
-  //     //dd($month);
-
-
-  //     $column = $dates[$day];
-
-  //     $attendances = DB::table('attendances')->where('employee_name', auth()->user()->teammember_id)
-  //       ->where('month', $month)->first();
-
-  //     if ($attendances ==  null) {
-  //       $teammember = DB::table('teammembers')->where('id', auth()->user()->teammember_id)->first();
-
-  //       $a = DB::table('attendances')->insert([
-  //         'employee_name'         =>     auth()->user()->teammember_id,
-  //         'month'         =>    $month,
-  //         'dateofjoining' =>   $teammember->joining_date,
-  //         'created_at'          =>     date('Y-m-d H:i:s'),
-  //         //   'exam_leave'      =>$value->date_total,
-  //       ]);
-  //       //dd($a);
-  //     }
-
-
-  //     //   dd($noofdaysaspertimesheet);
-
-  //     $updatedtotalhour = $request->totalhour;
-  //     if ($attendances != null && property_exists($attendances, $column)) {
-  //       if ($attendances->$column != "LWP") {
-  //         $updatedtotalhour = $request->totalhour + $attendances->$column;
-  //       }
-  //     }
-  //     DB::table('attendances')
-  //       ->where('employee_name', auth()->user()->teammember_id)
-  //       ->where('month', $month)
-  //       ->update([$column => $updatedtotalhour]);
-
-
-  //     //end attendance
-
-
-
-
-
-  //     $output = array('msg' => 'Create Successfully');
-  //     return redirect('timesheet')->with('success', $output);
-  //   } catch (Exception $e) {
-  //     DB::rollBack();
-  //     Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
-  //     report($e);
-  //     $output = array('msg' => $e->getMessage());
-  //     return back()->withErrors($output)->withInput();
-  //   }
-  // }
-  //! working on new joining teammember
   public function store(Request $request)
   {
     try {
@@ -3200,13 +1194,6 @@ class TimesheetController extends Controller
         // return $result;
         // dd('yes', $result);
         foreach ($result as $date) {
-          // $a = DB::table('timesheetusers')->insert([
-          //   'date'        => date('Y-m-d', strtotime($date)),
-          //   'createdby'   => auth()->user()->teammember_id,
-          //   'created_at'  => date('Y-m-d H:i:s'),
-          //   'updated_at'  => date('Y-m-d H:i:s'),
-          // ]);
-
           $id = DB::table('timesheets')->insertGetId(
             [
               'created_by' => auth()->user()->teammember_id,
@@ -3299,11 +1286,11 @@ class TimesheetController extends Controller
         $currentDate = Carbon::now()->format('d-m-Y');
         //dd($currentHour);
 
-        // if ($currentDate == $request->date && Carbon::now()->hour < 18) {
-        //   //dd('hi');
-        //   $output = array('msg' => 'You can only fill today timesheet after 6:00 pm');
-        //   return back()->with('success', $output);
-        // }
+        if ($currentDate == $request->date && Carbon::now()->hour < 18) {
+          //   //dd('hi');
+          $output = array('msg' => 'You can only fill today timesheet after 6:00 pm');
+          return back()->with('success', $output);
+        }
 
         $leaves = DB::table('applyleaves')
           ->where('applyleaves.createdby', auth()->user()->teammember_id)
@@ -3494,7 +1481,11 @@ class TimesheetController extends Controller
 
 
       $output = array('msg' => 'Create Successfully');
-      return redirect('timesheet')->with('success', $output);
+      if (auth()->user()->role_id == 14 || auth()->user()->role_id == 13 || auth()->user()->role_id == 15) {
+        return redirect('timesheet/mylist')->with('success', $output);
+      } else {
+        return redirect('timesheet')->with('success', $output);
+      }
     } catch (Exception $e) {
       DB::rollBack();
       Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
@@ -3503,7 +1494,6 @@ class TimesheetController extends Controller
       return back()->withErrors($output)->withInput();
     }
   }
-
   public function timesheetUpload(Request $request)
   {
     $request->validate([
@@ -3565,7 +1555,6 @@ class TimesheetController extends Controller
    * @param  \App\Models\Outstationconveyance  $outstationconveyance
    * @return \Illuminate\Http\Response
    */
-
   public function edit($id)
   {
     //dd($date);
@@ -3586,6 +1575,9 @@ class TimesheetController extends Controller
     // $totalhour=$timesheet->totalhour;
 
     $rcount = 5 - $count;
+
+
+
 
     return view('backEnd.timesheet.edit', compact('id', 'timesheet', 'client', 'assignment', 'date', 'rcount', 'count'));
   }
@@ -3662,105 +1654,6 @@ class TimesheetController extends Controller
       return back()->withErrors($output)->withInput();
     }
   }
-  //! old code before timesheet multiple request
-  // public function timesheetrequestStore(Request $request)
-  // {
-  //   try {
-  //     $data = $request->except(['_token']);
-  //     // dd($data);
-
-  //     $id = DB::table('timesheetrequests')->insertGetId([
-  //       'partner'     =>     $request->partner,
-  //       'reason'     =>     $request->reason,
-  //       'status'     =>     0,
-  //       'createdby' => auth()->user()->teammember_id,
-  //       'created_at'          =>     date('Y-m-d H:i:s'),
-  //       'updated_at'              =>    date('Y-m-d H:i:s'),
-  //     ]);
-  //     // dd($id); 74
-
-  //     //     $travel = Assetprocurement::where('id', $id)->first();
-  //     // timesheet request mail to admin
-  //     $teammembermail = Teammember::where('id', $request->partner)->pluck('emailid')->first();
-  //     $name = Teammember::where('id', auth()->user()->teammember_id)->pluck('team_member')->first();
-
-  //     $data = array(
-  //       'teammember' => $name ?? '',
-  //       'email' => $teammembermail ?? '',
-  //       'id' => $id ?? '',
-  //     );
-  //     Mail::send('emails.timesheetrequestform', $data, function ($msg) use ($data) {
-  //       $msg->to($data['email']);
-  //       $msg->subject('Timesheet Submission Request');
-  //     });
-  //     // timesheet request mail to admin
-  //     $output = array('msg' => 'Request Successfully');
-  //     return back()->with('success', $output);
-  //   } catch (Exception $e) {
-  //     DB::rollBack();
-  //     Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
-  //     report($e);
-  //     $output = array('msg' => $e->getMessage());
-  //     return back()->withErrors($output)->withInput();
-  //   }
-  // }
-
-  // // Store timesheet request. timereq
-  // public function timesheetrequestStore(Request $request)
-  // {
-  //   try {
-  //     $data = $request->except(['_token']);
-  //     // dd($data);
-
-  //     $latestrequest = DB::table('timesheetrequests')
-  //       ->where('createdby', auth()->user()->teammember_id)
-  //       ->latest()
-  //       ->select('created_at')
-  //       ->first();
-  //     // dd($latestrequest);
-  //     $latestrequesthour = Carbon::parse($latestrequest->created_at);
-  //     $currentDateTime = Carbon::now();
-  //     // Check if the difference is more than 24 hours
-  //     if ($latestrequesthour->diffInHours($currentDateTime) > 24) {
-  //       $id = DB::table('timesheetrequests')->insertGetId([
-  //         'partner'     =>     $request->partner,
-  //         'reason'     =>     $request->reason,
-  //         'status'     =>     0,
-  //         'createdby' => auth()->user()->teammember_id,
-  //         'created_at'          =>     date('Y-m-d H:i:s'),
-  //         'updated_at'              =>    date('Y-m-d H:i:s'),
-  //       ]);
-
-  //       // timesheet request mail to admin
-  //       $teammembermail = Teammember::where('id', $request->partner)->pluck('emailid')->first();
-  //       $name = Teammember::where('id', auth()->user()->teammember_id)->pluck('team_member')->first();
-
-  //       $data = array(
-  //         'teammember' => $name ?? '',
-  //         'email' => $teammembermail ?? '',
-  //         'id' => $id ?? '',
-  //       );
-  //       Mail::send('emails.timesheetrequestform', $data, function ($msg) use ($data) {
-  //         $msg->to($data['email']);
-  //         $msg->subject('Timesheet Submission Request');
-  //       });
-  //       // timesheet request mail to admin
-  //       $output = array('msg' => 'Request Successfully');
-  //       return back()->with('success', $output);
-  //     } else {
-  //       $output = array('msg' => 'You can submit new timesheet request after 24 hour');
-  //       return back()->with('statuss', $output);
-  //     }
-  //   } catch (Exception $e) {
-  //     DB::rollBack();
-  //     Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
-  //     report($e);
-  //     $output = array('msg' => $e->getMessage());
-  //     return back()->withErrors($output)->withInput();
-  //   }
-  // }
-
-  // Store timesheet request. timereq 2
   public function timesheetrequestStore(Request $request)
   {
     try {
@@ -3800,6 +1693,7 @@ class TimesheetController extends Controller
           );
           Mail::send('emails.timesheetrequestform', $data, function ($msg) use ($data) {
             $msg->to($data['email']);
+            $msg->cc('itsupport_delhi@vsa.co.in');
             $msg->subject('Timesheet Submission Request');
           });
           // timesheet request mail to admin
@@ -3830,6 +1724,7 @@ class TimesheetController extends Controller
         );
         Mail::send('emails.timesheetrequestform', $data, function ($msg) use ($data) {
           $msg->to($data['email']);
+          $msg->cc('itsupport_delhi@vsa.co.in');
           $msg->subject('Timesheet Submission Request');
         });
         // timesheet request mail to admin
@@ -3917,6 +1812,449 @@ class TimesheetController extends Controller
       return view('backEnd.timesheet.reportsection', compact('employeename', 'client', 'assignment', 'partner', 'years'));
     }
   }
+
+  public function filterDataAdmin(Request $request)
+  {
+    // dd($request);
+    if (auth()->user()->role_id == 13) {
+
+      //shahidfil
+      $teamname = $request->input('teamname');
+      $start = $request->input('start');
+      $end = $request->input('end');
+      $totalhours = $request->input('totalhours');
+      $partnerId = $request->input('partnersearch');
+
+
+      $query = DB::table('timesheetreport')
+        ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
+        ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
+        ->where('timesheetreport.teamid', auth()->user()->teammember_id)
+        ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
+        ->latest();
+
+      // teamname with othser field to  filter
+      if ($teamname) {
+        $query->where('timesheetreport.teamid', $teamname);
+      }
+
+      if ($teamname && $totalhours) {
+        $query->where(function ($q) use ($teamname, $totalhours) {
+          $q->where('timesheetreport.teamid', $teamname)
+            ->where('timesheetreport.totaltime', $totalhours);
+        });
+      }
+      if ($teamname && $partnerId) {
+        $query->where(function ($q) use ($teamname, $partnerId) {
+          $q->where('timesheetreport.teamid', $teamname)
+            ->where('timesheetreport.partnerid', $partnerId);
+        });
+      }
+
+      // patner or othse one data
+      if ($partnerId) {
+        $query->where('timesheetreport.partnerid', $partnerId);
+      }
+
+      if ($partnerId && $totalhours) {
+        $query->where(function ($q) use ($partnerId, $totalhours) {
+          $q->where('timesheetreport.partnerid', $partnerId)
+            ->where('timesheetreport.totaltime', $totalhours);
+        });
+      }
+
+      // total hour wise  wise or othser data
+      if ($totalhours) {
+        $query->where('timesheetreport.totaltime', $totalhours);
+      }
+      //! end date 
+      if ($start && $end) {
+        $query->where(function ($query) use ($start, $end) {
+          $query->whereBetween('timesheetreport.startdate', [$start, $end])
+            ->orWhereBetween('timesheetreport.enddate', [$start, $end])
+            ->orWhere(function ($query) use ($start, $end) {
+              $query->where('timesheetreport.startdate', '<=', $start)
+                ->where('timesheetreport.enddate', '>=', $end);
+            });
+        });
+      }
+    } else {
+      // dd($request);
+
+      $teamname = $request->input('teamname');
+      $start = $request->input('start');
+      $end = $request->input('end');
+      $totalhours = $request->input('totalhours');
+      $partnerId = $request->input('partnersearch');
+
+
+      $query = DB::table('timesheetreport')
+        ->leftjoin('teammembers', 'teammembers.id', 'timesheetreport.teamid')
+        ->leftjoin('teammembers as partners', 'partners.id', 'timesheetreport.partnerid')
+        ->select('timesheetreport.*', 'teammembers.team_member', 'partners.team_member as partnername')
+        ->orderBy('timesheetreport.startdate', 'desc');
+
+      // teamname with othser field to  filter
+      if ($teamname) {
+        $query->where('timesheetreport.teamid', $teamname);
+      }
+
+      if ($teamname && $totalhours) {
+        $query->where(function ($q) use ($teamname, $totalhours) {
+          $q->where('timesheetreport.teamid', $teamname)
+            ->where('timesheetreport.totaltime', $totalhours);
+        });
+      }
+      if ($teamname && $partnerId) {
+        $query->where(function ($q) use ($teamname, $partnerId) {
+          $q->where('timesheetreport.teamid', $teamname)
+            ->where('timesheetreport.partnerid', $partnerId);
+        });
+      }
+
+      // patner or othse one data
+      if ($partnerId) {
+        $query->where('timesheetreport.partnerid', $partnerId);
+      }
+
+      if ($partnerId && $totalhours) {
+        $query->where(function ($q) use ($partnerId, $totalhours) {
+          $q->where('timesheetreport.partnerid', $partnerId)
+            ->where('timesheetreport.totaltime', $totalhours);
+        });
+      }
+
+      // total hour wise  wise or othser data
+      if ($totalhours) {
+        $query->where('timesheetreport.totaltime', $totalhours);
+      }
+      //! end date 
+      if ($start && $end) {
+        $query->where(function ($query) use ($start, $end) {
+          $query->whereBetween('timesheetreport.startdate', [$start, $end])
+            ->orWhereBetween('timesheetreport.enddate', [$start, $end])
+            ->orWhere(function ($query) use ($start, $end) {
+              $query->where('timesheetreport.startdate', '<=', $start)
+                ->where('timesheetreport.enddate', '>=', $end);
+            });
+        });
+      }
+    }
+    $filteredDataaa = $query->get();
+
+    // maping double date ************
+    $groupedData = $filteredDataaa->groupBy(function ($item) {
+      return $item->team_member . '|' . $item->week;
+    })->map(function ($group) {
+      $firstItem = $group->first();
+
+      return (object)[
+        'id' => $firstItem->id,
+        'teamid' => $firstItem->teamid,
+        'week' => $firstItem->week,
+        'totaldays' => $group->sum('totaldays'),
+        'totaltime' => $group->sum('totaltime'),
+        'startdate' => $firstItem->startdate,
+        'enddate' => $firstItem->enddate,
+        'partnername' => $firstItem->partnername,
+        'created_at' => $firstItem->created_at,
+        'team_member' => $firstItem->team_member,
+        'partnerid' => $firstItem->partnerid,
+      ];
+    });
+
+
+    $filteredData = collect($groupedData->values());
+    return response()->json($filteredData);
+  }
+
+  public function weeklylist(Request $request)
+  {
+    // dd($request);
+    if (auth()->user()->role_id == 13) {
+
+      $date = DB::table('timesheetreport')->where('id', $request->id)->first();
+
+
+      $timesheetData = DB::table('timesheetusers')
+        ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
+        ->where('timesheetusers.createdby', $request->teamid)
+        // i have removed below line 
+        // ->where('timesheetusers.partner', $request->partnerid)
+        // ->where('timesheetusers.status', 1)
+        ->whereIn('timesheetusers.status', [1, 2, 3])
+        ->where('timesheetusers.date', '>=', $date->startdate)
+        ->where('timesheetusers.date', '<=', $date->enddate)
+        ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
+    } else {
+      // edit timesheet
+      // dd(auth()->user());
+      $date = DB::table('timesheetreport')->where('id', $request->id)->first();
+
+      $timesheetData = DB::table('timesheetusers')
+        ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
+        ->where('timesheetusers.createdby', $request->teamid)
+        // i have removed below line 
+        // ->where('timesheetusers.partner', $request->partnerid)
+        // ->where('timesheetusers.status', 1)
+        ->whereIn('timesheetusers.status', [1, 2, 3])
+        ->where('timesheetusers.date', '>=', $date->startdate)
+        ->where('timesheetusers.date', '<=', $date->enddate)
+        ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
+    }
+    // dd($timesheetData);
+    return view('backEnd.timesheet.weeklylist', compact('timesheetData'));
+  }
+
+  //* timesheet edit fubctionality
+  public function timesheetEdit(Request $request, $id)
+  {
+    $timesheetedit = DB::table('timesheetusers')
+      ->leftjoin('clients', 'clients.id', 'timesheetusers.client_id')
+      ->leftjoin('assignments', 'assignments.id', 'timesheetusers.assignment_id')
+      ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
+      ->where('timesheetusers.timesheetid', $id)
+      ->select('timesheetusers.*', 'clients.client_name', 'assignments.assignment_name', 'teammembers.team_member')
+      ->get();
+
+    // client of particular partner
+    $partner = Teammember::where('role_id', '=', 13)->where('status', '=', 1)->with('title')->get();
+    $teammember = Teammember::where('role_id', '!=', 11)->with('title', 'role')->get();
+    if (auth()->user()->role_id == 11) {
+      $client = Client::where('status', 1)->select('id', 'client_name')->orderBy('client_name', 'ASC')->get();
+    } elseif (auth()->user()->role_id == 13) {
+      $clientss = DB::table('assignmentmappings')
+        ->leftjoin('assignmentbudgetings', 'assignmentbudgetings.assignmentgenerate_id', 'assignmentmappings.assignmentgenerate_id')
+        ->leftjoin('clients', 'clients.id', 'assignmentbudgetings.client_id')
+        ->where('assignmentmappings.leadpartner', auth()->user()->teammember_id)
+        ->orwhere('assignmentmappings.otherpartner', auth()->user()->teammember_id)
+        ->select('clients.client_name', 'clients.id')
+        ->orderBy('client_name', 'ASC')
+        ->distinct()->get();
+
+      $clients = DB::table('clients')
+        ->whereIn('id', [29, 32, 33, 34])
+        ->select('clients.client_name', 'clients.id')
+        ->orderBy('client_name', 'ASC')
+        ->distinct()->get();
+
+      $client = $clientss->merge($clients);
+    } else {
+      $client = DB::table('assignmentteammappings')
+        ->leftjoin('assignmentmappings', 'assignmentmappings.id', 'assignmentteammappings.assignmentmapping_id')
+        ->leftjoin('assignmentbudgetings', 'assignmentbudgetings.assignmentgenerate_id', 'assignmentmappings.assignmentgenerate_id')
+        ->leftjoin('clients', 'clients.id', 'assignmentbudgetings.client_id')
+        ->orwhere('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
+        ->select('clients.client_name', 'clients.id')
+        ->orderBy('client_name', 'ASC')
+        ->distinct()->get();
+    }
+    $assignment = Assignment::select('id', 'assignment_name')->get();
+    //   dd($assignment);
+    // shahid assi
+    if ($request->ajax()) {
+      // dd(auth()->user()->id);
+      if (isset($request->cid)) {
+        if (auth()->user()->role_id == 13) {
+          echo "<option>Select Assignment</option>";
+          foreach (DB::table('assignmentbudgetings')->where('client_id', $request->cid)
+            ->where('created_by', auth()->user()->id)
+            ->leftjoin('assignments', 'assignments.id', 'assignmentbudgetings.assignment_id')
+            ->orderBy('assignment_name')->get() as $sub) {
+            echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
+          }
+        } else {
+          echo "<option>Select Assignment</option>";
+          foreach (DB::table('assignmentbudgetings')
+            ->join('assignmentmappings', 'assignmentmappings.assignmentgenerate_id', 'assignmentbudgetings.assignmentgenerate_id')
+            ->leftjoin('assignments', 'assignments.id', 'assignmentmappings.assignment_id')
+            ->leftjoin('assignmentteammappings', 'assignmentteammappings.assignmentmapping_id', 'assignmentmappings.id')
+            ->where('assignmentbudgetings.client_id', $request->cid)
+            ->where('assignmentteammappings.teammember_id', auth()->user()->teammember_id)
+            ->orderBy('assignment_name')->get() as $sub) {
+            echo "<option value='" . $sub->assignmentgenerate_id . "'>" . $sub->assignment_name . '( ' . $sub->assignmentgenerate_id . ' )' . "</option>";
+          }
+        }
+      }
+      if (isset($request->assignment)) {
+
+        if (auth()->user()->role_id == 11) {
+          echo "<option value=''>Select Partner</option>";
+          foreach (DB::table('assignmentmappings')
+
+            ->leftjoin('teammembers', 'teammembers.id', 'assignmentmappings.leadpartner')
+            ->leftjoin('teammembers as team', 'team.id', 'assignmentmappings.otherpartner')
+            ->where('assignmentmappings.assignmentgenerate_id', $request->assignment)
+            ->select('team.team_member as team_member', 'team.id', 'teammembers.id', 'teammembers.team_member')
+            ->get() as $subs) {
+            echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
+          }
+        } elseif (auth()->user()->role_id == 13) {
+          echo "<option value=''>Select Partner</option>";
+          foreach (DB::table('teammembers')
+            ->where('id', auth()->user()->teammember_id)
+            ->select('teammembers.id', 'teammembers.team_member')
+            ->get() as $subs) {
+            echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
+          }
+        } else {
+          //die;
+          echo "<option value=''>Select Partner</option>";
+          foreach (DB::table('assignmentmappings')
+
+            ->leftjoin('teammembers', 'teammembers.id', 'assignmentmappings.leadpartner')
+            ->leftjoin('teammembers as team', 'team.id', 'assignmentmappings.otherpartner')
+            ->where('assignmentmappings.assignmentgenerate_id', $request->assignment)
+            ->select('team.team_member as team_member', 'team.id', 'teammembers.id', 'teammembers.team_member')
+            ->get() as $subs) {
+            echo "<option value='" . $subs->id . "'>" . $subs->team_member . "</option>";
+          }
+        }
+      }
+    } else {
+      return view('backEnd.timesheet.correction', compact('client', 'teammember', 'assignment', 'partner', 'timesheetedit'));
+    }
+  }
+  public function timesheeteditstore(Request $request)
+  {
+    if (!is_numeric($request->assignment_id)) {
+      $assignment = Assignmentmapping::where('assignmentgenerate_id', $request->assignment_id)
+        ->select('assignment_id')
+        ->get()
+        ->toArray();
+      $assignment_id = $assignment[0]['assignment_id'];
+    } else {
+      $assignment_id = $request->assignment_id;
+    }
+    try {
+      DB::table('timesheetusers')->where('id', $request->timesheetusersid)->update([
+        'status'   =>   3,
+        'client_id'   =>  $request->client_id,
+        // 'assignment_id'   =>  $request->assignment_id,
+        'assignment_id'   =>   $assignment_id,
+        'partner'   =>  $request->partner,
+        'workitem'   =>   $request->workitem,
+        'createdby'   =>   $request->createdby,
+        'location'   =>   $request->location,
+        'hour'   =>   $request->hour,
+      ]);
+
+      if ($request->status == 2) {
+        DB::table('timesheetupdatelogs')->insert([
+          'timesheetusers_id'   =>  $request->timesheetusersid,
+          'status'   =>   3,
+          'created_at' => now(),
+          'updated_at' => now(),
+        ]);
+      }
+      $output = array('msg' => 'Updated Successfully');
+      // return back()->with('statuss', $output);
+      return redirect()->to('rejectedlist')->with('statuss', $output);
+    } catch (Exception $e) {
+      DB::rollBack();
+      Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
+      report($e);
+      $output = array('msg' => $e->getMessage());
+      return back()->withErrors($output)->withInput();
+    }
+  }
+
+  public function rejectedlist(Request $request)
+  {
+
+    if (auth()->user()->role_id == 13) {
+      $timesheetData = DB::table('timesheetusers')
+        ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
+        ->where('timesheetusers.createdby', auth()->user()->teammember_id)
+        // ->where('timesheetusers.status', 2)
+        ->whereIn('timesheetusers.status', [2, 3])
+        ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->paginate(10);
+      // dd($timesheetData);
+    } else if (auth()->user()->role_id == 11) {
+      $timesheetData = DB::table('timesheetusers')
+        ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
+        ->whereIn('timesheetusers.status', [2, 3])
+        ->where('timesheetusers.rejectedby', auth()->user()->teammember_id)
+        ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
+    } else {
+      $timesheetData = DB::table('timesheetusers')
+        ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
+        ->where('timesheetusers.createdby', auth()->user()->teammember_id)
+        ->whereIn('timesheetusers.status', [2, 3])
+        ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->paginate(10);
+      // dd($timesheetData);
+    }
+    // dd($timesheetData);
+    return view('backEnd.timesheet.rejectedlist', compact('timesheetData'));
+  }
+
+  // all rejected timesheet on patner for team
+  public function rejectedlistteam(Request $request)
+  {
+    // dd($request);
+    if (auth()->user()->role_id == 13) {
+      $timesheetData = DB::table('timesheetusers')
+        ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
+        ->whereIn('timesheetusers.status', [2, 3])
+        ->where('timesheetusers.rejectedby', auth()->user()->teammember_id)
+        ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
+    }
+    // return view('backEnd.timesheet.rejectedlist', compact('timesheetData'));
+    return view('backEnd.timesheet.rejectedlistteam', compact('timesheetData'));
+  }
+
+  // after rejectedlistteam()
+
+  public function rejectedtimesheetlog(Request $request)
+  {
+    if (auth()->user()->role_id == 11) {
+      $timesheetData = DB::table('timesheetusers')
+        ->leftjoin('teammembers', 'teammembers.id', 'timesheetusers.createdby')
+        ->whereIn('timesheetusers.status', [2, 3])
+        ->where('timesheetusers.rejectedby', auth()->user()->teammember_id)
+        ->select('timesheetusers.*', 'teammembers.team_member')->orderBy('id', 'ASC')->get();
+    }
+    return view('backEnd.timesheet.rejectedlist', compact('timesheetData'));
+  }
+
+  public function  timesheetreject($id)
+  {
+
+    try {
+      DB::table('timesheetusers')->where('id', $id)->update([
+
+        'status'   => 2,
+        'rejectedby'   =>   auth()->user()->teammember_id,
+
+      ]);
+      // timesheet rejected mail
+      $data = DB::table('teammembers')
+        ->leftjoin('timesheetusers', 'timesheetusers.createdby', 'teammembers.id')
+        ->where('timesheetusers.id', $id)
+        ->first();
+      $emailData = [
+        'emailid' => $data->emailid,
+        'teammember_name' => $data->team_member,
+      ];
+
+      Mail::send('emails.timesheetrejected', $emailData, function ($msg) use ($emailData) {
+        $msg->to([$emailData['emailid']]);
+        $msg->subject('Timesheet rejected');
+      });
+      // timesheet rejected mail end hare
+
+
+      $output = array('msg' => 'Rejected Successfully');
+      return back()->with('statuss', $output);
+    } catch (Exception $e) {
+      DB::rollBack();
+      Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
+      report($e);
+      $output = array('msg' => $e->getMessage());
+      return back()->withErrors($output)->withInput();
+    }
+  }
+
 
   public function filtersection(Request $request)
   {

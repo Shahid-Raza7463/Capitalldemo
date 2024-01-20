@@ -1,12 +1,5 @@
 <?php
 
-use App\Console\Commands\BirthdayReminder;
-use App\Console\Commands\CalculateAttendance;
-use App\Console\Commands\TimesheetMonday;
-use App\Console\Commands\TimesheetnotfilllastweekReminder;
-use App\Console\Commands\TimesheetnotfillReminder;
-use App\Console\Commands\TimesheetnotfillstaffReminder;
-use App\Console\Commands\TimesheetReminder;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DataanalyticsController;
 use App\Http\Controllers\ReportController;
@@ -135,7 +128,6 @@ use App\Http\Controllers\DiscusesController;
 use App\Http\Controllers\DirectapplicationController;
 use App\Http\Controllers\EmployeepayrollController;
 use App\Http\Controllers\ExportController;
-use App\Http\Controllers\TestingController;
 use App\Models\Attendance;
 use App\Models\Teammember;
 
@@ -150,43 +142,6 @@ use App\Models\Teammember;
 | contains the "web" middleware group. Now create something great!
 |
 */
-//? only testing purpose
-Route::resource('/test', TestingController::class);
-Route::get('/testreminder2', [TimesheetnotfillstaffReminder::class, 'handle']);
-Route::get('/testreminder4', [BirthdayReminder::class, 'handle']);
-Route::get('/testreminder5', [TimesheetnotfilllastweekReminder::class, 'handle']);
-Route::get('/testreminder', [TimesheetnotfillReminder::class, 'handle']);
-// Route::get('/testreminder', [TimesheetReminder::class, 'handle']);
-//? only testing purpose end
-
-//? 
-//? apply leave filtering 
-Route::get('/filtering-applyleve', [ApplyleaveController::class, 'filterDataAdmin']);
-// Route::get('/filter-dataadmin', [TimesheetController::class, 'filterDataAdmin']);
-//? exem leave request
-Route::get('/examleaverequest/{id}',  [ApplyleaveController::class, 'exampleleaveshow']);
-Route::get('/examleaverequestlist', [ApplyleaveController::class, 'examleaverequestlist']);
-Route::post('/applyleaverequest',  [ApplyleaveController::class, 'leaverequeststore'])->name('applyleaverequest');
-Route::any('/examleaverequestapprove/{id}', [ApplyleaveController::class, 'examleaverequest'])->name('examleaveapprove');
-
-//? read and unread notification. notification read
-// Route::get('/notifications', 'NotificationController@index')->name('notifications.index');
-Route::get('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');;
-
-//? Assignment rejected module. assrejected
-Route::get('/assignment/reject/{id}/{status}/{teamid}', [StepController::class, 'assignmentreject']);
-//? timesheet rejected module
-Route::get('/rejectedlist', [TimesheetController::class, 'rejectedlist']);
-Route::get('/rejectedlist/team', [TimesheetController::class, 'rejectedlistteam']);
-Route::get('/timesheet/reject/{id}', [TimesheetController::class, 'timesheetreject']);
-Route::post('/timesheetupdate/submit',  [TimesheetController::class, 'timesheeteditstore']);
-Route::get('/timesheetreject/edit/{id}',  [TimesheetController::class, 'timesheetEdit']);
-Route::get('/rejectedtimesheetlog', [TimesheetController::class, 'rejectedtimesheetlog']);
-//? Done it
-// zip download
-Route::get('/assignmentzip/{assignmentfolder_id}', [AssignmentfolderfileController::class, 'zipfile'])->name('zip');
-//? Done it
-
 
 Route::get('/', [App\Http\Controllers\Auth\LoginController::class, 'showloginForm']);
 Route::get('/forgetpassword', [App\Http\Controllers\Auth\ClientLoginController::class, 'forgetPassword']);
@@ -455,6 +410,9 @@ Route::group(['middleware' => ['twofactor']], function () {
   Route::post('/otpap/store', [BackEndController::class, 'otpapstore']);
   Route::get('/appointmentletters', [BackEndController::class, 'appointmentletter']);
   Route::get('/training/create', [BackEndController::class, 'create']);
+
+  Route::get('/openandcloseassignment/{id}', [BackEndController::class, 'openandcloseassignment']);
+
   Route::post('/clientfolder/folderstore', [ClientController::class, 'folderStore']);
   Route::get('/folderlist/{id}', [ClientController::class, 'folderList']);
   Route::get('/clientfolderlist/destroy/{id}', [ClientController::class, 'folderDestroy']);
@@ -563,9 +521,16 @@ Route::group(['middleware' => ['twofactor']], function () {
 
   // applyleave routes
   Route::resource('/applyleave', ApplyleaveController::class);
+  Route::post('/applyleave/update/{id}',  [ApplyleaveController::class, 'update']);
+
   Route::get('/leave/teamapplication',  [ApplyleaveController::class, 'teamApplication']);
   Route::post('/teamapplication/store',  [ApplyleaveController::class, 'teamapplicationStore']);
-
+  Route::get('/examleaverequest/{id}',  [ApplyleaveController::class, 'exampleleaveshow']);
+  Route::get('/examleaverequestlist', [ApplyleaveController::class, 'examleaverequestlist']);
+  Route::post('/applyleaverequest',  [ApplyleaveController::class, 'leaverequeststore'])->name('applyleaverequest');
+  Route::any('/examleaverequestapprove/{id}', [ApplyleaveController::class, 'examleaverequest'])->name('examleaveapprove');
+  Route::get('/filtering-applyleve', [ApplyleaveController::class, 'filterDataAdmin']);
+  Route::get('/openleave/{id}', [ApplyleaveController::class, 'open_leave']);
 
   // Policy routes
   Route::resource('/policy', PolicyController::class);
@@ -587,6 +552,9 @@ Route::group(['middleware' => ['twofactor']], function () {
   // Travelform routes
   Route::resource('/travelform', TravelformController::class);
   Route::post('/travelform/update', [TravelformController::class, 'travelupdate']);
+
+  // zip download
+  Route::get('/assignmentzip/{assignmentfolder_id}', [AssignmentfolderfileController::class, 'zipfile'])->name('zip');
 
   // Travelfeedback routes
   Route::get('/travelformfeedback',  [TravelfeedbackController::class, 'feedback']);
@@ -638,7 +606,7 @@ Route::group(['middleware' => ['twofactor']], function () {
   Route::get('/resetpasswords/{id}', [TeammemberController::class, 'resetPasswords']);
   Route::post('/authpassword/update/{id}', [TeammemberController::class, 'authpassword_Update']);
 
-  Route::get('changeteamStatus',  [TeammemberController::class, 'changeteamStatus']);
+  Route::get('/changeteamStatus/{id}/{status}/{teamid}', [TeammemberController::class, 'changeteamStatus']);
 
   Route::get('teamstatus',  [TeammemberController::class, 'teamstatus']);
 
@@ -729,6 +697,7 @@ Route::group(['middleware' => ['twofactor']], function () {
 
   // Notification routes
   Route::resource('/notification', NotificationController::class);
+  Route::get('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
 
   // Secretary of Task routes
   Route::resource('/secretaryoftask', SecretarialTaskController::class);
@@ -966,14 +935,15 @@ Route::group(['middleware' => ['twofactor']], function () {
   Route::post('/checklist/store', [StepController::class, 'checklistStore']);
   Route::post('/modify/excel', [StepController::class, 'excelStore']);
   Route::get('/viewassignment/{id}', [StepController::class, 'viewAssignment']);
-  Route::delete('/uidindata/{id}', [StepController::class, 'UdinDelete'])->name('uidindata.delete');
-
-
   Route::get('/auditchecklist', [StepController::class, 'auditChecklist']);
   Route::get('/auditchecklistanswer', [StepController::class, 'auditchecklistAnswer']);
   Route::get('/deleteassignmentchecklist/{id}', [StepController::class, 'deleteassignmentChecklist']);
   Route::get('/assignmentudin/close/{id}', [StepController::class, 'assignmentclose']);
   Route::post('/assignmentudin/store', [StepController::class, 'UdinStore']);
+  Route::delete('/uidindata/{id}', [StepController::class, 'UdinDelete'])->name('uidindata.delete');
+  Route::get('/assignment/reject/{id}/{status}/{teamid}', [StepController::class, 'assignmentreject']);
+
+
   // Teamlogin routes
   Route::resource('/teamlogin', TeamloginController::class);
 
@@ -1065,14 +1035,7 @@ Route::group(['middleware' => ['twofactor']], function () {
   Route::get('/timesheetupdatesubmit', [TimesheetrequestController::class, 'timesheetupdatesubmit']);
   Route::post('/timesheetsubmits',  [TimesheetrequestController::class, 'timesheetsubmit']);
   Route::get('/timesheetsubmission', [TimesheetrequestController::class, 'timesheetsubmission']);
-
-
-  // filter on timesheet routes
-  // Route::get('/testclient', [TimesheetController::class, 'testclient']);
-  // vcvc
-
-  // it is implemented submitte timesheet tab on admin and patner 
-  Route::get('/filter-dataadmin', [TimesheetController::class, 'filterDataAdmin']);
+  Route::get('/opentimesheetrequest/{id}', [TimesheetrequestController::class, 'open_timesheet']);
 
   // timesheet routes
   Route::get('/timesheet/destroy/{id}', [TimesheetController::class, 'destroy']);
@@ -1080,14 +1043,10 @@ Route::group(['middleware' => ['twofactor']], function () {
 
   Route::get('/timesheet/fulllist', [TimesheetController::class, 'full_list']);
   Route::get('/timesheet/allteamsubmitted', [TimesheetController::class, 'allteamsubmitted']);
-
+  Route::get('/filter-dataadmin', [TimesheetController::class, 'filterDataAdmin']);
   Route::get('/timesheet/teamlist', [TimesheetController::class, 'timesheet_teamlist']);
   Route::get('/timesheet/partnersubmitted', [TimesheetController::class, 'partnersubmitted']);
-
-  Route::get('/filter-weeklist', [TimesheetController::class, 'filterweeklylist']);
-
   Route::get('/weeklylist', [TimesheetController::class, 'weeklylist']);
-  Route::get('timesheet/search', [TimesheetController::class, 'show']);
   Route::get('timesheet/search', [TimesheetController::class, 'show']);
   Route::resource('/timesheet', TimesheetController::class);
   Route::get('/view/timesheet/{id}', [TimesheetController::class, 'view']);
@@ -1099,6 +1058,13 @@ Route::group(['middleware' => ['twofactor']], function () {
   Route::get('/filtersection',  [TimesheetController::class, 'filtersection']);
 
 
+
+  Route::get('/rejectedlist', [TimesheetController::class, 'rejectedlist']);
+  Route::get('/rejectedlist/team', [TimesheetController::class, 'rejectedlistteam']);
+  Route::get('/timesheet/reject/{id}', [TimesheetController::class, 'timesheetreject']);
+  Route::post('/timesheetupdate/submit',  [TimesheetController::class, 'timesheeteditstore']);
+  Route::get('/timesheetreject/edit/{id}',  [TimesheetController::class, 'timesheetEdit']);
+  Route::get('/rejectedtimesheetlog', [TimesheetController::class, 'rejectedtimesheetlog']);
 
 
   // Conversion routes

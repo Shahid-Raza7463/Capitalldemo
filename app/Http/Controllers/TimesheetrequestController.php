@@ -23,6 +23,49 @@ class TimesheetrequestController extends Controller
     {
         $this->middleware('auth');
     }
+
+    public function open_timesheet($id)
+    {
+        if (auth()->user()->role_id == 11 || auth()->user()->role_id == 18) {
+
+            $timesheetrequestsDatas = DB::table('timesheetrequests')
+                ->leftjoin('clients', 'clients.id', 'timesheetrequests.client_id')
+                ->leftjoin('assignments', 'assignments.id', 'timesheetrequests.assignment_id')
+                ->leftjoin('teammembers', 'teammembers.id', 'timesheetrequests.partner')
+                ->leftjoin('teammembers as createdby', 'createdby.id', 'timesheetrequests.createdby')
+                ->where('timesheetrequests.status', 0)
+                ->select(
+                    'timesheetrequests.*',
+                    'clients.client_name',
+                    'assignments.assignment_name',
+                    'teammembers.team_member',
+                    'createdby.team_member as createdbyauth'
+                )->get();
+            //  dd($timesheetrequestsDatas);
+
+
+        } else {
+            $timesheetrequestsDatas = DB::table('timesheetrequests')
+                ->leftjoin('clients', 'clients.id', 'timesheetrequests.client_id')
+                ->leftjoin('assignments', 'assignments.id', 'timesheetrequests.assignment_id')
+                ->leftjoin('teammembers', 'teammembers.id', 'timesheetrequests.partner')
+                ->leftjoin('teammembers as createdby', 'createdby.id', 'timesheetrequests.createdby')
+                ->where('timesheetrequests.status', 0)
+                ->where(function ($query) {
+                    $query->where('timesheetrequests.partner', auth()->user()->teammember_id)
+                        ->orWhere('timesheetrequests.createdby', auth()->user()->teammember_id);
+                })
+                ->select(
+                    'timesheetrequests.*',
+                    'clients.client_name',
+                    'assignments.assignment_name',
+                    'teammembers.team_member',
+                    'createdby.team_member as createdbyauth'
+                )->get();
+        }
+        return view('backEnd.timesheetrequest.index', compact('timesheetrequestsDatas'));
+    }
+
     public function timesheetupdatesubmit(Request $request)
     {
         // dd($request);
@@ -69,33 +112,21 @@ class TimesheetrequestController extends Controller
             return back()->withErrors($output)->withInput();
         }
     }
-    //! old code before submitted timesheet patner in one place  
+    //! 16-01-24 old code 
     // public function timesheetsubmission(Request $request)
     // {
-    //     // $request->validate([
-    //     //     'companyname' => "required",
-    //     // ]);
-
+    //     // dd('hi');
     //     try {
     //         $usertimesheetfirstdate =  DB::table('timesheets')
     //             ->where('status', '0')
     //             ->where('created_by', auth()->user()->teammember_id)->orderBy('date', 'ASC')->first();
-    //         // dd($usertimesheetfirstdate->date);
     //         $lastdate = Carbon::createFromFormat('Y-m-d', $usertimesheetfirstdate->date ?? '')->addDays(6);
 
-
-    //         //------------------- Suhail's code start---------------------
-
-
-
     //         if ($usertimesheetfirstdate) {
-    //             // Convert the retrieved date to a DateTime object
     //             $firstDate = new DateTime($usertimesheetfirstdate->date);
-
-    //             // Find the day of the week for the first date (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
     //             $dayOfWeek = $firstDate->format('w');
-
     //             $daysToAdd = 0;
+
     //             if ($dayOfWeek !== '0') {
     //                 $daysToAdd = 7 - $dayOfWeek;
     //             } else {
@@ -110,6 +141,7 @@ class TimesheetrequestController extends Controller
     //             }
 
     //             $upcomingSunday = (new DateTime($firstDate->format('Y-m-d')))->modify("+$daysToAdd days")->format('Y-m-d');
+
     //             $presentWeekMonday = (new DateTime($firstDate->format('Y-m-d')))->modify("-$daysToSubtract days")->format('Y-m-d');
     //         }
 
@@ -125,7 +157,6 @@ class TimesheetrequestController extends Controller
     //         $lastdate = $get_six_Data->max('date');
 
 
-
     //         $retrievedDates = [];   //copy dates in retrievedDates array in datetime format
 
     //         foreach ($get_six_Data as $entry) {
@@ -133,38 +164,39 @@ class TimesheetrequestController extends Controller
     //             $retrievedDates[] = $date->format('Y-m-d');
     //         }
 
-
-
     //         $expectedDates = [];   // will contain ALL the dates occurs b/w first day to upcoming sunday
 
     //         $firstDate = new DateTime($presentWeekMonday);
+
     //         $upcomingSundayDate = new DateTime($upcomingSunday);
+
 
     //         // Clone $firstDate so that it is not modified
     //         $currentDate = clone $firstDate;
 
-
     //         while ($currentDate->format('Y-m-d') < $upcomingSundayDate->format('Y-m-d')) {  //excluding sunday
     //             $expectedDates[] = $currentDate->format('Y-m-d');
+
+
     //             $currentDate->modify("+1 day");
     //         }
 
-    //         // Check for missing dates
     //         $missingDates = array_diff($expectedDates, $retrievedDates);
-
 
     //         if (!empty($missingDates)) {
     //             $missingDatesString = implode(', ', $missingDates);
+    //             // "2023-11-13, 2023-11-14"
 
     //             $output = array('msg' => "Timesheet Submit Failed Missing dates: $missingDatesString");
     //             return back()->with('success', $output);
-    //         } else {   //"All dates present"    //------------------- Suhail's code end---------------------
+    //         } else {
 
     //             foreach ($get_six_Data as $getsixdata) {
-
+    //                 // dd('hi', $getsixdata);
 
     //                 // Convert the requested date to a Carbon instance
     //                 $requestedDate = Carbon::createFromFormat('Y-m-d', $getsixdata->date);
+
 
     //                 if (date('l', strtotime(date('d-m-Y', strtotime($getsixdata->date)))) == 'Monday') {
 
@@ -172,25 +204,31 @@ class TimesheetrequestController extends Controller
 
     //                     // Find the nearest next Saturday to the requested date
     //                     $nextSaturday = $requestedDate->copy()->next(Carbon::SATURDAY);
-    //                     //dd($nextSaturday);
+
     //                     // Format the dates in 'Y-m-d' format
     //                     $previousMondayFormatted = $getsixdata->date;
     //                     $nextSaturdayFormatted = $nextSaturday->format('Y-m-d');
     //                     $nextSaturdayFormatted = $lastdate;
 
+
     //                     $week =  date('d-m-Y', strtotime($previousMondayFormatted))  . ' to ' . date('d-m-Y', strtotime($nextSaturdayFormatted));
-    //                     $co = DB::table('timesheetusers')->where('createdby', auth()->user()->teammember_id)
+
+    //                     //------------------- Shahid's code start---------------------
+    //                     $co = DB::table('timesheetusers')
+    //                         ->where('createdby', auth()->user()->teammember_id)
     //                         ->whereBetween('date', [$previousMondayFormatted, $nextSaturdayFormatted])
-    //                         ->select('partner', DB::raw('SUM(hour) as total_hours'), DB::raw('COUNT(DISTINCT timesheetid) as row_count'))
-    //                         ->groupBy('partner')
+    //                         ->select(DB::raw('SUM(hour) as total_hours'), DB::raw('COUNT(DISTINCT timesheetid) as row_count'))
     //                         ->get();
+
+
+    //                     // dd($co);
     //                     foreach ($co as $codata) {
     //                         DB::table('timesheetreport')->insert([
     //                             'teamid'       =>     auth()->user()->teammember_id,
     //                             'week'       =>     $week,
     //                             'totaldays'       =>     $codata->row_count,
     //                             'totaltime' =>  $codata->total_hours,
-    //                             'partnerid'  => $codata->partner,
+    //                             // 'partnerid'  => $codata->partner,
     //                             'startdate'  => $previousMondayFormatted,
     //                             'enddate'  => $nextSaturdayFormatted,
     //                             // 'created_at'                =>       date('y-m-d'),
@@ -200,19 +238,6 @@ class TimesheetrequestController extends Controller
 
     //                     // dd($co);
     //                 }
-    //                 // else {
-
-    //                 //      // Find the nearest previous Monday to the requested date
-    //                 // $previousMonday = $requestedDate->copy()->previous(Carbon::MONDAY);
-
-    //                 // // Find the nearest next Saturday to the requested date
-    //                 // $nextSaturday = $requestedDate->copy()->next(Carbon::SATURDAY);
-    //                 // //dd($nextSaturday);
-    //                 // // Format the dates in 'Y-m-d' format
-    //                 // $previousMondayFormatted = $previousMonday->format('Y-m-d');
-    //                 // $nextSaturdayFormatted = $nextSaturday->format('Y-m-d');
-    //                 // }
-
 
 
 
@@ -238,149 +263,377 @@ class TimesheetrequestController extends Controller
     //         return back()->withErrors($output)->withInput();
     //     }
     // }
-    //! zxzx submi 26-12-23
+
+    //! for testing only 
+    // public function timesheetsubmission(Request $request)
+    // {
+    //     try {
+    //         // Get latest timesheet end date from timesheetreport table
+    //         $latesttimesheetreport =  DB::table('timesheetreport')
+    //             ->where('teamid', auth()->user()->teammember_id)
+    //             ->orderBy('id', 'desc')
+    //             ->first();
+    //         // dd($latesttimesheetreport);
+
+    //         $timesheetreportenddate = Carbon::parse($latesttimesheetreport->enddate);
+    //         $nextSaturday = $timesheetreportenddate->copy()->next(Carbon::SATURDAY);
+    //         // dd($nextSaturday);
+    //         $formattedNextSaturday = $nextSaturday->format('Y-m-d');
+    //         $formattedNextSaturday1 = $nextSaturday->format('d-m-Y');
+
+
+    //         $nextweektimesheet = DB::table('timesheetusers')
+    //             ->where('createdby', auth()->user()->teammember_id)
+    //             ->where('status', '0')
+    //             ->where('date', $formattedNextSaturday)
+    //             ->first();
+    //         // dd($nextweektimesheet);
+
+    //         if ($nextweektimesheet == null) {
+    //             $output = array('msg' => "Fill the timesheet After this week : $formattedNextSaturday1");
+    //             return back()->with('success', $output);
+    //         }
+    //         // dd($latesttimesheetreport);
+    //         // -------------------------Shahid coding end hare -----------------------------
+    //         else {
+
+    //             $output = array('msg' => 'Timesheet Submit Successfully');
+    //             return back()->with('success', $output);
+    //         }
+
+    //         // Check previous week timesheet 
+
+    //     } catch (Exception $e) {
+    //         DB::rollBack();
+    //         Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
+    //         report($e);
+    //         $output = array('msg' => $e->getMessage());
+    //         return back()->withErrors($output)->withInput();
+    //     }
+    // }
+
+    // timesheet submitted
     public function timesheetsubmission(Request $request)
     {
-        // dd($request);
         try {
-            $usertimesheetfirstdate =  DB::table('timesheets')
-                ->where('status', '0')
-                ->where('created_by', auth()->user()->teammember_id)->orderBy('date', 'ASC')->first();
-            $lastdate = Carbon::createFromFormat('Y-m-d', $usertimesheetfirstdate->date ?? '')->addDays(6);
+            // -----------------------------Shahid coding start------------------------------------------
+            // Get latest submited timesheet end date from timesheetreport table
+            $latesttimesheetreport =  DB::table('timesheetreport')
+                ->where('teamid', auth()->user()->teammember_id)
+                ->orderBy('id', 'desc')
+                ->first();
 
-            if ($usertimesheetfirstdate) {
-                $firstDate = new DateTime($usertimesheetfirstdate->date);
-                $dayOfWeek = $firstDate->format('w');
-                $daysToAdd = 0;
+            // $latesttimesheetreport is not null 
+            if ($latesttimesheetreport !== null) {
+                $timesheetreportenddate = Carbon::parse($latesttimesheetreport->enddate);
+                // find next sturday 
+                $nextSaturday = $timesheetreportenddate->copy()->next(Carbon::SATURDAY);
+                $formattedNextSaturday = $nextSaturday->format('Y-m-d');
+                $formattedNextSaturday1 = $timesheetreportenddate->format('d-m-Y');
 
-                if ($dayOfWeek !== '0') {
-                    $daysToAdd = 7 - $dayOfWeek;
-                } else {
-                    $output = array('msg' => 'Submit the timesheet from Monday to Sunday.');
-                    return back()->with('success', $output);
+                // find next week timesheet filled or not 
+                $nextweektimesheet = DB::table('timesheetusers')
+                    ->where('createdby', auth()->user()->teammember_id)
+                    ->where('status', '0')
+                    ->where('date', $formattedNextSaturday)
+                    ->first();
+                // if not filled next week timesheet then 
+                if ($nextweektimesheet == null) {
+                    $output = array('msg' => "Fill the Week timesheet After this week : $formattedNextSaturday1");
+                    return back()->with('statuss', $output);
                 }
+                // -----------------------------Shahid coding end------------------------------------------
+                else {
 
-                if ($dayOfWeek > 0) {
-                    $daysToSubtract = $dayOfWeek - 1;
-                } else {
-                    $daysToSubtract = $dayOfWeek;
-                }
+                    $usertimesheetfirstdate =  DB::table('timesheets')
+                        ->where('status', '0')
+                        ->where('created_by', auth()->user()->teammember_id)->orderBy('date', 'ASC')->first();
+                    $lastdate = Carbon::createFromFormat('Y-m-d', $usertimesheetfirstdate->date ?? '')->addDays(6);
 
-                $upcomingSunday = (new DateTime($firstDate->format('Y-m-d')))->modify("+$daysToAdd days")->format('Y-m-d');
+                    if ($usertimesheetfirstdate) {
+                        $firstDate = new DateTime($usertimesheetfirstdate->date);
+                        $dayOfWeek = $firstDate->format('w');
+                        $daysToAdd = 0;
 
-                $presentWeekMonday = (new DateTime($firstDate->format('Y-m-d')))->modify("-$daysToSubtract days")->format('Y-m-d');
-            }
-
-
-
-            $get_six_Data = DB::table('timesheets')
-                ->where('status', '0')
-                ->where('created_by', auth()->user()->teammember_id)
-                ->whereBetween('date', [$firstDate->format('Y-m-d'), $upcomingSunday])
-                ->orderBy('date', 'ASC')
-                ->get();
-
-            $lastdate = $get_six_Data->max('date');
-
-
-            $retrievedDates = [];   //copy dates in retrievedDates array in datetime format
-
-            foreach ($get_six_Data as $entry) {
-                $date = new DateTime($entry->date);
-                $retrievedDates[] = $date->format('Y-m-d');
-            }
-
-            $expectedDates = [];   // will contain ALL the dates occurs b/w first day to upcoming sunday
-
-            $firstDate = new DateTime($presentWeekMonday);
-
-            $upcomingSundayDate = new DateTime($upcomingSunday);
-
-
-            // Clone $firstDate so that it is not modified
-            $currentDate = clone $firstDate;
-
-            while ($currentDate->format('Y-m-d') < $upcomingSundayDate->format('Y-m-d')) {  //excluding sunday
-                $expectedDates[] = $currentDate->format('Y-m-d');
-
-
-                $currentDate->modify("+1 day");
-            }
-
-            $missingDates = array_diff($expectedDates, $retrievedDates);
-
-            if (!empty($missingDates)) {
-                $missingDatesString = implode(', ', $missingDates);
-                // "2023-11-13, 2023-11-14"
-
-                $output = array('msg' => "Timesheet Submit Failed Missing dates: $missingDatesString");
-                return back()->with('success', $output);
-            } else {
-
-                foreach ($get_six_Data as $getsixdata) {
-                    // dd('hi', $getsixdata);
-
-                    // Convert the requested date to a Carbon instance
-                    $requestedDate = Carbon::createFromFormat('Y-m-d', $getsixdata->date);
-
-
-                    if (date('l', strtotime(date('d-m-Y', strtotime($getsixdata->date)))) == 'Monday') {
-
-                        $previousMonday = $requestedDate->copy()->previous(Carbon::MONDAY);
-
-                        // Find the nearest next Saturday to the requested date
-                        $nextSaturday = $requestedDate->copy()->next(Carbon::SATURDAY);
-
-                        // Format the dates in 'Y-m-d' format
-                        $previousMondayFormatted = $getsixdata->date;
-                        $nextSaturdayFormatted = $nextSaturday->format('Y-m-d');
-                        $nextSaturdayFormatted = $lastdate;
-
-
-                        $week =  date('d-m-Y', strtotime($previousMondayFormatted))  . ' to ' . date('d-m-Y', strtotime($nextSaturdayFormatted));
-
-                        //------------------- Shahid's code start---------------------
-                        $co = DB::table('timesheetusers')
-                            ->where('createdby', auth()->user()->teammember_id)
-                            ->whereBetween('date', [$previousMondayFormatted, $nextSaturdayFormatted])
-                            ->select(DB::raw('SUM(hour) as total_hours'), DB::raw('COUNT(DISTINCT timesheetid) as row_count'))
-                            ->get();
-
-
-                        // dd($co);
-                        foreach ($co as $codata) {
-                            DB::table('timesheetreport')->insert([
-                                'teamid'       =>     auth()->user()->teammember_id,
-                                'week'       =>     $week,
-                                'totaldays'       =>     $codata->row_count,
-                                'totaltime' =>  $codata->total_hours,
-                                // 'partnerid'  => $codata->partner,
-                                'startdate'  => $previousMondayFormatted,
-                                'enddate'  => $nextSaturdayFormatted,
-                                // 'created_at'                =>       date('y-m-d'),
-                                'created_at'                =>      date('y-m-d H:i:s'),
-                            ]);
+                        if ($dayOfWeek !== '0') {
+                            $daysToAdd = 7 - $dayOfWeek;
+                        } else {
+                            $output = array('msg' => 'Submit the timesheet from Monday to Sunday.');
+                            return back()->with('success', $output);
                         }
 
-                        // dd($co);
+                        if ($dayOfWeek > 0) {
+                            $daysToSubtract = $dayOfWeek - 1;
+                        } else {
+                            $daysToSubtract = $dayOfWeek;
+                        }
+
+                        $upcomingSunday = (new DateTime($firstDate->format('Y-m-d')))->modify("+$daysToAdd days")->format('Y-m-d');
+
+                        $presentWeekMonday = (new DateTime($firstDate->format('Y-m-d')))->modify("-$daysToSubtract days")->format('Y-m-d');
                     }
 
 
 
-                    DB::table('timesheetusers')->where('timesheetid', $getsixdata->id)->update([
-                        'status'         =>     1,
-                        'updated_at'              =>    date('y-m-d'),
-                    ]);
-                    DB::table('timesheets')->where('id', $getsixdata->id)->update([
-                        'status'         =>     1,
-                        'updated_at'              =>    date('y-m-d'),
-                    ]);
+                    $get_six_Data = DB::table('timesheets')
+                        ->where('status', '0')
+                        ->where('created_by', auth()->user()->teammember_id)
+                        ->whereBetween('date', [$firstDate->format('Y-m-d'), $upcomingSunday])
+                        ->orderBy('date', 'ASC')
+                        ->get();
+
+                    $lastdate = $get_six_Data->max('date');
+
+
+                    $retrievedDates = [];   //copy dates in retrievedDates array in datetime format
+
+                    foreach ($get_six_Data as $entry) {
+                        $date = new DateTime($entry->date);
+                        $retrievedDates[] = $date->format('Y-m-d');
+                    }
+
+                    $expectedDates = [];   // will contain ALL the dates occurs b/w first day to upcoming sunday
+
+                    $firstDate = new DateTime($presentWeekMonday);
+
+                    $upcomingSundayDate = new DateTime($upcomingSunday);
+
+
+                    // Clone $firstDate so that it is not modified
+                    $currentDate = clone $firstDate;
+
+                    while ($currentDate->format('Y-m-d') < $upcomingSundayDate->format('Y-m-d')) {  //excluding sunday
+                        $expectedDates[] = $currentDate->format('Y-m-d');
+
+
+                        $currentDate->modify("+1 day");
+                    }
+
+                    $missingDates = array_diff($expectedDates, $retrievedDates);
+
+                    if (!empty($missingDates)) {
+                        $missingDatesString = implode(', ', $missingDates);
+                        // "2023-11-13, 2023-11-14"
+
+                        $output = array('msg' => "Timesheet Submit Failed Missing dates: $missingDatesString");
+                        return back()->with('success', $output);
+                    } else {
+
+                        foreach ($get_six_Data as $getsixdata) {
+                            // dd('hi', $getsixdata);
+
+                            // Convert the requested date to a Carbon instance
+                            $requestedDate = Carbon::createFromFormat('Y-m-d', $getsixdata->date);
+
+
+                            if (date('l', strtotime(date('d-m-Y', strtotime($getsixdata->date)))) == 'Monday') {
+
+                                $previousMonday = $requestedDate->copy()->previous(Carbon::MONDAY);
+
+                                // Find the nearest next Saturday to the requested date
+                                $nextSaturday = $requestedDate->copy()->next(Carbon::SATURDAY);
+
+                                // Format the dates in 'Y-m-d' format
+                                $previousMondayFormatted = $getsixdata->date;
+                                $nextSaturdayFormatted = $nextSaturday->format('Y-m-d');
+                                $nextSaturdayFormatted = $lastdate;
+
+
+                                $week =  date('d-m-Y', strtotime($previousMondayFormatted))  . ' to ' . date('d-m-Y', strtotime($nextSaturdayFormatted));
+
+                                //------------------- Shahid's code start---------------------
+                                $co = DB::table('timesheetusers')
+                                    ->where('createdby', auth()->user()->teammember_id)
+                                    ->whereBetween('date', [$previousMondayFormatted, $nextSaturdayFormatted])
+                                    ->select(DB::raw('SUM(hour) as total_hours'), DB::raw('COUNT(DISTINCT timesheetid) as row_count'))
+                                    ->get();
+
+
+                                // dd($co);
+                                foreach ($co as $codata) {
+                                    DB::table('timesheetreport')->insert([
+                                        'teamid'       =>     auth()->user()->teammember_id,
+                                        'week'       =>     $week,
+                                        'totaldays'       =>     $codata->row_count,
+                                        'totaltime' =>  $codata->total_hours,
+                                        // 'partnerid'  => $codata->partner,
+                                        'startdate'  => $previousMondayFormatted,
+                                        'enddate'  => $nextSaturdayFormatted,
+                                        // 'created_at'                =>       date('y-m-d'),
+                                        'created_at'                =>      date('y-m-d H:i:s'),
+                                    ]);
+                                }
+
+                                // dd($co);
+                            }
+
+
+
+                            DB::table('timesheetusers')->where('timesheetid', $getsixdata->id)->update([
+                                'status'         =>     1,
+                                'updated_at'              =>    date('y-m-d'),
+                            ]);
+                            DB::table('timesheets')->where('id', $getsixdata->id)->update([
+                                'status'         =>     1,
+                                'updated_at'              =>    date('y-m-d'),
+                            ]);
+                        }
+                    }
+
+                    $output = array('msg' => "Timesheet Submit Successfully till $previousMondayFormatted to $nextSaturdayFormatted ");
+                    // $output = array('msg' => 'Timesheet Submit Successfully');
+                    return back()->with('success', $output);
                 }
             }
 
+            // $latesttimesheetreport is null then 
+            // else {
+            //     $output = array('msg' => 'No timesheet report found.');
+            //     return back()->with('statuss', $output);
+            // }
 
-            $output = array('msg' => 'Timesheet Submit Successfully');
-            return back()->with('success', $output);
+            // $latesttimesheetreport is null then 
+            else {
+                // if want to short this function then create function and call hare
+                $usertimesheetfirstdate =  DB::table('timesheets')
+                    ->where('status', '0')
+                    ->where('created_by', auth()->user()->teammember_id)->orderBy('date', 'ASC')->first();
+                $lastdate = Carbon::createFromFormat('Y-m-d', $usertimesheetfirstdate->date ?? '')->addDays(6);
+
+                if ($usertimesheetfirstdate) {
+                    $firstDate = new DateTime($usertimesheetfirstdate->date);
+                    $dayOfWeek = $firstDate->format('w');
+                    $daysToAdd = 0;
+
+                    if ($dayOfWeek !== '0') {
+                        $daysToAdd = 7 - $dayOfWeek;
+                    } else {
+                        $output = array('msg' => 'Submit the timesheet from Monday to Sunday.');
+                        return back()->with('success', $output);
+                    }
+
+                    if ($dayOfWeek > 0) {
+                        $daysToSubtract = $dayOfWeek - 1;
+                    } else {
+                        $daysToSubtract = $dayOfWeek;
+                    }
+
+                    $upcomingSunday = (new DateTime($firstDate->format('Y-m-d')))->modify("+$daysToAdd days")->format('Y-m-d');
+
+                    $presentWeekMonday = (new DateTime($firstDate->format('Y-m-d')))->modify("-$daysToSubtract days")->format('Y-m-d');
+                }
+
+                $get_six_Data = DB::table('timesheets')
+                    ->where('status', '0')
+                    ->where('created_by', auth()->user()->teammember_id)
+                    ->whereBetween('date', [$firstDate->format('Y-m-d'), $upcomingSunday])
+                    ->orderBy('date', 'ASC')
+                    ->get();
+
+                $lastdate = $get_six_Data->max('date');
+
+
+                $retrievedDates = [];   //copy dates in retrievedDates array in datetime format
+
+                foreach ($get_six_Data as $entry) {
+                    $date = new DateTime($entry->date);
+                    $retrievedDates[] = $date->format('Y-m-d');
+                }
+
+                $expectedDates = [];   // will contain ALL the dates occurs b/w first day to upcoming sunday
+
+                $firstDate = new DateTime($presentWeekMonday);
+
+                $upcomingSundayDate = new DateTime($upcomingSunday);
+
+
+                // Clone $firstDate so that it is not modified
+                $currentDate = clone $firstDate;
+
+                while ($currentDate->format('Y-m-d') < $upcomingSundayDate->format('Y-m-d')) {  //excluding sunday
+                    $expectedDates[] = $currentDate->format('Y-m-d');
+
+
+                    $currentDate->modify("+1 day");
+                }
+
+                $missingDates = array_diff($expectedDates, $retrievedDates);
+
+                if (!empty($missingDates)) {
+                    $missingDatesString = implode(', ', $missingDates);
+                    // "2023-11-13, 2023-11-14"
+
+                    $output = array('msg' => "Timesheet Submit Failed Missing dates: $missingDatesString");
+                    return back()->with('success', $output);
+                } else {
+
+                    foreach ($get_six_Data as $getsixdata) {
+                        // dd('hi', $getsixdata);
+
+                        // Convert the requested date to a Carbon instance
+                        $requestedDate = Carbon::createFromFormat('Y-m-d', $getsixdata->date);
+
+
+                        if (date('l', strtotime(date('d-m-Y', strtotime($getsixdata->date)))) == 'Monday') {
+
+                            $previousMonday = $requestedDate->copy()->previous(Carbon::MONDAY);
+
+                            // Find the nearest next Saturday to the requested date
+                            $nextSaturday = $requestedDate->copy()->next(Carbon::SATURDAY);
+
+                            // Format the dates in 'Y-m-d' format
+                            $previousMondayFormatted = $getsixdata->date;
+                            $nextSaturdayFormatted = $nextSaturday->format('Y-m-d');
+                            $nextSaturdayFormatted = $lastdate;
+
+
+                            $week =  date('d-m-Y', strtotime($previousMondayFormatted))  . ' to ' . date('d-m-Y', strtotime($nextSaturdayFormatted));
+
+                            //------------------- Shahid's code start---------------------
+                            $co = DB::table('timesheetusers')
+                                ->where('createdby', auth()->user()->teammember_id)
+                                ->whereBetween('date', [$previousMondayFormatted, $nextSaturdayFormatted])
+                                ->select(DB::raw('SUM(hour) as total_hours'), DB::raw('COUNT(DISTINCT timesheetid) as row_count'))
+                                ->get();
+
+
+                            // dd($co);
+                            foreach ($co as $codata) {
+                                DB::table('timesheetreport')->insert([
+                                    'teamid'       =>     auth()->user()->teammember_id,
+                                    'week'       =>     $week,
+                                    'totaldays'       =>     $codata->row_count,
+                                    'totaltime' =>  $codata->total_hours,
+                                    // 'partnerid'  => $codata->partner,
+                                    'startdate'  => $previousMondayFormatted,
+                                    'enddate'  => $nextSaturdayFormatted,
+                                    // 'created_at'                =>       date('y-m-d'),
+                                    'created_at'                =>      date('y-m-d H:i:s'),
+                                ]);
+                            }
+
+                            // dd($co);
+                        }
+
+
+
+                        DB::table('timesheetusers')->where('timesheetid', $getsixdata->id)->update([
+                            'status'         =>     1,
+                            'updated_at'              =>    date('y-m-d'),
+                        ]);
+                        DB::table('timesheets')->where('id', $getsixdata->id)->update([
+                            'status'         =>     1,
+                            'updated_at'              =>    date('y-m-d'),
+                        ]);
+                    }
+                }
+
+                // $previousMondayFormatted1 = $previousMondayFormatted->format('d-m-Y');
+                // $nextSaturdayFormatted1 = $nextSaturdayFormatted->format('d-m-Y');
+                $output = array('msg' => "Timesheet Submit Successfully till $previousMondayFormatted1 to $nextSaturdayFormatted1 ");
+                // $output = array('msg' => 'Timesheet Submit Successfully');
+                return back()->with('success', $output);
+            }
         } catch (Exception $e) {
             DB::rollBack();
             Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
@@ -421,7 +674,6 @@ class TimesheetrequestController extends Controller
             return back()->withErrors($output)->withInput();
         }
     }
-
     public function index()
     {
 
@@ -447,6 +699,7 @@ class TimesheetrequestController extends Controller
                 ->leftjoin('teammembers', 'teammembers.id', 'timesheetrequests.partner')
                 ->leftjoin('teammembers as createdby', 'createdby.id', 'timesheetrequests.createdby')
                 ->where('timesheetrequests.partner', auth()->user()->teammember_id)
+                ->orwhere('timesheetrequests.createdby', auth()->user()->teammember_id)
                 ->select(
                     'timesheetrequests.*',
                     'clients.client_name',
@@ -475,7 +728,6 @@ class TimesheetrequestController extends Controller
             return view('backEnd.timesheetrequest.index', compact('timesheetrequestsDatas'));
         }
     }
-
 
     /**
      * Show the form for creating a new resource.
@@ -540,109 +792,6 @@ class TimesheetrequestController extends Controller
      * @param  \App\Models\Timesheetrequest  $timesheetrequest
      * @return \Illuminate\Http\Response
      */
-    //! old code 
-    // public function update(Request $request, $id)
-    // {
-    //     dd($request);
-    //     try {
-    //         $data = $request->except(['_token']);
-    //         if ($request->status == 1) {
-    //             $currentdate = date('Y-m-d');
-    //             $date = Carbon::createFromFormat('Y-m-d', $currentdate ?? '')->addDays(4);
-    //             $holidaydate = $date->format('Y-m-d');
-    //             $data['validate'] = $holidaydate;
-    //         }
-
-    //         Timesheetrequest::find($id)->update($data);
-    //         $created = DB::table('timesheetrequests')->where('id', $id)->first();
-    //         $teammembermail = Teammember::where('id', $created->createdby)->first();
-    //         $data = array(
-    //             'email' => $teammembermail->emailid ?? '',
-    //             'status' => $created->status ?? '',
-    //             'date' => $created->validate ?? '',
-    //             'id' => $id ?? ''
-    //         );
-    //         Mail::send('emails.timesheetrequestapprovelform', $data, function ($msg) use ($data) {
-    //             $msg->to($data['email']);
-    //             $msg->subject('VSA Timesheet Approval');
-    //         });
-    //         $output = array('msg' => 'Update Successfully');
-    //         return redirect('timesheetrequestlist')->with('success', $output);
-    //     } catch (Exception $e) {
-    //         DB::rollBack();
-    //         Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
-    //         report($e);
-    //         $output = array('msg' => $e->getMessage());
-    //         return back()->withErrors($output)->withInput();
-    //     }
-    // }
-
-    // ! curently working
-    // Approved and reject timesheet request. timereq
-    // public function update(Request $request, $id)
-    // {
-    //     // dd($request);
-    //     try {
-    //         $data = $request->except(['_token']);
-    //         if ($request->status == 1) {
-    //             $currentdate = date('Y-m-d');
-    //             $date = Carbon::createFromFormat('Y-m-d', $currentdate ?? '')->addDays(4);
-    //             $holidaydate = $date->format('Y-m-d');
-    //             $data['validate'] = $holidaydate;
-    //         }
-    //         // Current Data that is click by admin
-    //         $timesheetrequestdata = DB::table('timesheetrequests')
-    //             ->where('id', $id)
-    //             ->first();
-    //         // Find latest timesheet Request
-    //         $latestrequest = DB::table('timesheetrequests')
-    //             ->where('createdby', $timesheetrequestdata->createdby)
-    //             ->latest()->first();
-    //         // check latest timesheet Request == Current Data that is click by admin
-    //         if ($latestrequest->id == $timesheetrequestdata->id) {
-    //             // approve timesheet request
-    //             if ($latestrequest) {
-    //                 DB::table('timesheetrequests')
-    //                     ->where('id', $latestrequest->id)
-    //                     ->update(['status' => 1]);
-    //             }
-    //         } else {
-    //             $output = array('msg' => 'Please Approve Latest Timesheet Request');
-    //             return redirect('timesheetrequestlist')->with('statuss', $output);
-    //         }
-    //         // Find all rest data after approving
-    //         $allrestrequest =  DB::table('timesheetrequests')->where('createdby', $timesheetrequestdata->createdby)->where('status', 0)->get();
-    //         // reject all reset timesheet request
-    //         foreach ($allrestrequest as $allrestrequestdata) {
-    //             DB::table('timesheetrequests')->where('createdby', $allrestrequestdata->createdby)->where('status', 0)->update([
-    //                 'status'  => 2,
-    //                 'remark'  => 'Duplicate Request',
-    //             ]);
-    //         }
-    //         // timesheet request list rejected end 
-    //         $created = DB::table('timesheetrequests')->where('id', $id)->first();
-    //         $teammembermail = Teammember::where('id', $created->createdby)->first();
-    //         $data = array(
-    //             'email' => $teammembermail->emailid ?? '',
-    //             'status' => $created->status ?? '',
-    //             'date' => $created->validate ?? '',
-    //             'id' => $id ?? ''
-    //         );
-    //         Mail::send('emails.timesheetrequestapprovelform', $data, function ($msg) use ($data) {
-    //             $msg->to($data['email']);
-    //             $msg->subject('VSA Timesheet Approval');
-    //         });
-    //         $output = array('msg' => 'Update Successfully');
-    //         return redirect('timesheetrequestlist')->with('success', $output);
-    //     } catch (Exception $e) {
-    //         DB::rollBack();
-    //         Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
-    //         report($e);
-    //         $output = array('msg' => $e->getMessage());
-    //         return back()->withErrors($output)->withInput();
-    //     }
-    // }
-    // ! curently working
     public function update(Request $request, $id)
     {
         // dd($request);

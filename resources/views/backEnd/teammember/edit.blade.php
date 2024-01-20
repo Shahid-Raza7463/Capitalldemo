@@ -20,7 +20,7 @@
                             @if($reset != null)
                                 
                            
-							 <a style="float: right;" href="{{url('/resetpassword/'.$teammember->id)}}" class="btn btn-info-soft btn-sm">Reset Password<i class="fas fa-unlock-alt"></i></a>
+							 <a style="float: right;color:white;" href="{{url('/resetpassword/'.$teammember->id)}}" class="btn btn-info-soft btn-sm">Reset Password<i class="fas fa-unlock-alt"></i></a>
                              @endif
                         </div>
                     </div>

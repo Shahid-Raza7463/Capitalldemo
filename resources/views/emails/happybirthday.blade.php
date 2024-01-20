@@ -316,7 +316,7 @@
                                         you our warmest and
                                         most heartfelt wishes.
                                     </p>
-                                    <img src="{{ url('backEnd\image\thumbnail_MTk3MDIwNDE3MjU1Mjg2NDEy.jpg') }}"
+                                    <img src="{{ url('backEnd/image/thumbnail_MTk3MDIwNDE3MjU1Mjg2NDEy.jpg') }}"
                                         class="img-fluid" alt="Responsive image">
                                     <p>We are thrilled to be able to share this great day with you, and glad to have you
                                         as a valuable member of

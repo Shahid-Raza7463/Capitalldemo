@@ -2,6 +2,8 @@
 
 namespace App\Exports;
 
+use App\Teammember; // Adjust the namespace based on your model
+
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
