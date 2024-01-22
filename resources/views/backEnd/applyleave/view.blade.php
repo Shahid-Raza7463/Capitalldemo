@@ -7,8 +7,8 @@
                 @if ($applyleave->approver == Auth::user()->teammember_id || Auth::user()->teammember_id == $applyleave->createdby)
                     @if ($applyleave->status == '0')
                         <!--    <li class="btn btn-info ml-2"><a href="{{ route('applyleave.edit', $applyleave->id ?? '') }}"
-                                                                                                                                                                                                                                                                    style="color:white;">Edit
-                                                                                                                                                                                                                                                                </a></li> -->
+                                                                                                                                                                                                                                                                                                                style="color:white;">Edit
+                                                                                                                                                                                                                                                                                                            </a></li> -->
                     @endif
                 @endif
                 <li> <a class="btn btn-success ml-2" href="{{ url('applyleave') }}">
@@ -49,7 +49,7 @@
                                         <td>{{ $applyleave->team_member }}</td>
                                     </tr>
                                     <tr>
-                                        <td><b>From Dateaaa : </b></td>
+                                        <td><b>From Date : </b></td>
                                         <td>{{ date('F d,Y', strtotime($applyleave->from)) }}</td>
                                         <td><b>To Date :</b></td>
                                         <td>{{ date('F d,Y', strtotime($applyleave->to)) }}</td>
@@ -120,18 +120,6 @@
                                                                     name="status" value="1" class="form-control"
                                                                     placeholder="Enter Location">
                                                             </form>
-                                                            {{-- <form method="post"
-                                                                action="{{ route('applyleave.update', $applyleave->id) }}"
-                                                                enctype="multipart/form-data">
-                                                                @method('PATCH')
-                                                                @csrf
-                                                                <button style="margin-left:11px;" type="submit"
-                                                                    class="btn btn-danger">
-                                                                    Reject</button>
-                                                                <input hidden type="text" id="example-date-input"
-                                                                    name="status" value="2" class="form-control"
-                                                                    placeholder="Enter Location">
-                                                            </form> --}}
                                                             <button style="margin-left:11px;height: 35px;"
                                                                 data-toggle="modal" data-target="#exampleModal12"
                                                                 class="btn btn-danger">

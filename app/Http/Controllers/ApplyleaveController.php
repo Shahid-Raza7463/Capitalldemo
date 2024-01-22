@@ -1608,7 +1608,7 @@ class ApplyleaveController extends Controller
 
   public function store(Request $request)
   {
-
+    //dd($request);
     $request->validate([
       'leavetype' => "required",
       'to' => "required",
@@ -2464,6 +2464,7 @@ class ApplyleaveController extends Controller
   public function update(Request $request, $id)
   {
 
+    //dd($id);
     try {
 
       if ($request->status == 1) {
@@ -3592,7 +3593,6 @@ class ApplyleaveController extends Controller
       $data = $request->except(['_token', 'teammember_id']);
       $data['updatedby'] = auth()->user()->teammember_id;
       Applyleave::find($id)->update($data);
-      // dd($data);
       $output = array('msg' => 'Updated Successfully');
       return redirect('applyleave')->with('success', $output);
     } catch (Exception $e) {

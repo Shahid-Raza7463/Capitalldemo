@@ -109,9 +109,9 @@
                               </tr>
                           </thead>
                           <tbody>
-                              {{-- @php
+                              @php
                                   dd($get_date);
-                              @endphp --}}
+                              @endphp
                               @foreach ($get_date as $jobDatas)
                                   <tr>
                                       <td><a
